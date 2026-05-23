@@ -106,7 +106,6 @@ class MemoryCompiler:
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_input}],
                 temperature=0.1
             )
-            # Most már visszaadjuk a felhasznált token adatokat (usage) is!
             return json.loads(res.choices[0].message.content), res.usage
         except: return None, None
 
@@ -140,7 +139,9 @@ class StateMachine:
             for k in TENSION_KEYS:
                 old_val = last["tensions"].get(k, 0.0)
                 new_val = max(float(tensions.get(k, 0)), old_val * self.decay_rate)
-                state["tensions"][k] = round(new_val, 2), state["deltas"][k] = round(new_val - old_val, 2)
+                # JAVÍTOTT RÉSZ: Két külön sorba szedve a szótár értékadás
+                state["tensions"][k] = round(new_val, 2)
+                state["deltas"][k] = round(new_val - old_val, 2)
                 
         state["topology"] = self.evaluate_collapse_topology(state["tensions"], state["deltas"], len(anchors))
         history.append(state)
