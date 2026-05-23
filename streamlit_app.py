@@ -106,7 +106,8 @@ class StateMachine:
         state["topology"] = self.evaluate_collapse_topology(state["tensions"], len(anchors))
         history.append(state)
         return history
-        class WritingEngine:
+# --- MÁSODIK RÉSZ INNEN INDUL ---
+class WritingEngine:
     @staticmethod
     def generate_prompt(state, mode, web, out_fmt, switches, cur_state, pat):
         sw_txt = "\n".join([f"{k}={v}" for k, v in switches.items()])
@@ -194,7 +195,6 @@ with st.sidebar:
         st.rerun()
     st.markdown("<div class='copyright'>Concept & Design:<br><b>Apáti Balázs / CSAPATI</b><br><span style='color:white;'>COGNITO ENGINE v3.5.1 PRO × 9.4</span></div>", unsafe_allow_html=True)
 
-# LOGO VAGY FEJLÉC BETÖLTÉSE
 try:
     st.image("logo.png", use_container_width=True)
 except:
@@ -203,7 +203,6 @@ except:
     except:
         st.markdown("<h1 style='text-align:center;'>⬛ COGNITO ENGINE PRO</h1>", unsafe_allow_html=True)
 
-# JAVÍTOTT MAIN INIT (A NameError elhárítva, client külön sorban!)
 if "OPENAI_API_KEY" not in st.secrets: st.error("API KEY MISSING!"), st.stop()
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 pat_eng, comp, st_mach = PatternEngine(), MemoryCompiler(client), StateMachine()
@@ -257,4 +256,4 @@ if user_query:
         st.markdown(out)
         st.session_state.chat_messages.append({"role": "assistant", "content": out})
     st.rerun()
-        
+    
