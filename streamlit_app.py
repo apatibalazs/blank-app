@@ -5,17 +5,12 @@ from openai import OpenAI
 
 st.set_page_config(page_title="COGNITO ENGINE v3.5.1 × 9.4", layout="wide", initial_sidebar_state="expanded")
 
-# ==============================================================================
-# CYBERPUNK HUD & GLASSMORPHISM CSS
-# ==============================================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600;700&display=swap');
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #030711; color: #e5e5e5; }
 .stApp { background: radial-gradient(circle at 50% 0%, #0a1128 0%, #010308 100%); }
 h1, h2, h3 { font-family: 'Orbitron', sans-serif !important; letter-spacing: 1.5px; text-shadow: 0 0 10px rgba(0,255,180,0.3); }
-
-/* Glassmorphism Panels & Chat Messages */
 .stChatMessage, .hud-box {
     background: rgba(10, 15, 30, 0.5) !important;
     backdrop-filter: blur(12px) !important;
@@ -24,40 +19,25 @@ h1, h2, h3 { font-family: 'Orbitron', sans-serif !important; letter-spacing: 1.5
     border-radius: 12px !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 255, 180, 0.05) !important;
 }
-
-/* Neon Glow Effects */
 .collapse-alert { 
-    background: rgba(255,0,60,0.1); 
-    border: 1px solid #ff003c; 
-    border-radius: 8px; padding: 15px; margin-bottom: 15px;
+    background: rgba(255,0,60,0.1); border: 1px solid #ff003c; border-radius: 8px; padding: 15px; margin-bottom: 15px;
     box-shadow: 0 0 20px rgba(255,0,60,0.4), inset 0 0 10px rgba(255,0,60,0.1); 
     font-family: 'Orbitron', sans-serif; color: #ff003c; text-shadow: 0 0 8px #ff003c;
 }
 .cost-box { 
-    background: rgba(255, 170, 0, 0.1); 
-    border: 1px solid rgba(255, 170, 0, 0.4); 
-    border-radius: 8px; padding: 12px; text-align: center; 
-    font-family: 'Orbitron', sans-serif; color: #ffaa00; 
-    box-shadow: 0 0 15px rgba(255, 170, 0, 0.2);
+    background: rgba(255, 170, 0, 0.1); border: 1px solid rgba(255, 170, 0, 0.4); border-radius: 8px; padding: 12px; text-align: center; 
+    font-family: 'Orbitron', sans-serif; color: #ffaa00; box-shadow: 0 0 15px rgba(255, 170, 0, 0.2);
 }
 .copyright { 
     font-size: 11px; color: #00ffb4; text-align: center; margin-top: 40px; padding: 12px; 
     border: 1px solid rgba(0, 255, 180, 0.25); border-radius: 8px; 
     background: rgba(0, 0, 0, 0.6); box-shadow: 0 0 10px rgba(0,255,180,0.1);
 }
-
-/* Action Button Neon */
 .stButton > button { 
-    background: linear-gradient(90deg, #00ffb4, #00bfff) !important; 
-    color: #000 !important; font-weight: bold; font-family: 'Orbitron', sans-serif;
-    border: none; border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0, 255, 180, 0.4) !important;
-    transition: all 0.3s ease !important;
+    background: linear-gradient(90deg, #00ffb4, #00bfff) !important; color: #000 !important; font-weight: bold; font-family: 'Orbitron', sans-serif;
+    border: none; border-radius: 8px; box-shadow: 0 0 15px rgba(0, 255, 180, 0.4) !important; transition: all 0.3s ease !important;
 }
-.stButton > button:hover {
-    box-shadow: 0 0 25px rgba(0, 255, 180, 0.8) !important;
-    transform: scale(1.02) !important;
-}
+.stButton > button:hover { box-shadow: 0 0 25px rgba(0, 255, 180, 0.8) !important; transform: scale(1.02) !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -110,7 +90,7 @@ class MemoryCompiler:
 class StateMachine:
     def __init__(self, decay_rate=0.8): self.decay_rate = decay_rate
     def evaluate_collapse_topology(self, tensions, anchors_count):
-        if tensions.get("ABSTRACTION_VS_REALITY", 0) > 0.75 and anchors_count == 0: return {"status": "CRITICAL", "type": "NARRATIVE_DISCONNECT", "desc": "Nincs kapcsolat a verifikálható valósággal."}
+        if tensions.get("ABSTRACTION_VS_REALITY", 0) > 0.75 and anchors_count == 0: return {"status": "CRITICAL", "type": "NARRATIVE_DISCONNECT", "desc": "Nincs kapcsolat a valósággal."}
         if tensions.get("ORDER_VS_ADAPTATION", 0) > 0.7 and tensions.get("EFFICIENCY_VS_STABILITY", 0) > 0.7: return {"status": "CRITICAL", "type": "RIGIDITY_DEATH_SPIRAL", "desc": "Merevedési halálspirál."}
         if tensions.get("POWER_VS_LEGITIMACY", 0) > 0.7 and tensions.get("TRANSPARENCY_VS_CONTROL", 0) > 0.7: return {"status": "CRITICAL", "type": "LEGITIMACY_CRISIS", "desc": "Kontroll maximalizálása felemészti a legitimitást."}
         if sum(tensions.values()) / len(TENSION_KEYS) > 0.55: return {"status": "WARNING", "type": "PRESSURE_ACCUMULATION", "desc": "A rendszernyomás emelkedik."}
@@ -126,57 +106,41 @@ class StateMachine:
         state["topology"] = self.evaluate_collapse_topology(state["tensions"], len(anchors))
         history.append(state)
         return history
-class WritingEngine:
+        class WritingEngine:
     @staticmethod
     def generate_prompt(state, mode, web, out_fmt, switches, cur_state, pat):
         sw_txt = "\n".join([f"{k}={v}" for k, v in switches.items()])
-        # UNCUT FULL WRITING ENGINE PROMPT - Nincs csonkítva!
         return f"""
-================================================================================
 COGNITO ENGINE 3.5.1 PRO × 9.4 — OMNI RUNTIME SYSTEM (FULL, UNCUT, STATE-DRIVEN)
 PRIMARY RUNTIME SEQUENCE × DUAL-CORE × DICTIONARY × PARADOX × ALCHEMY × INIT
-================================================================================
 
 [ACTIVE INITIALIZATION PROFILE]
 STATE: {state} | MODE: {mode} | WEB: {web} | OUTPUT FORMAT: {out_fmt}
 SWITCHES: {sw_txt}
 HUD CONTEXT: Entropy {pat.get('entropy')}, Inversions: {len(pat.get('patterns', []))}, Topology: {cur_state.get('topology', {}).get('type')}
 
---------------------------------------------------------------------------------
-CORE LAW
---------------------------------------------------------------------------------
+CORE LAW:
 A system that fully explains itself has already lost its precision.
 NEGATIVE: If everything is explained, nothing remains to operate on.
 METAPHORICAL: A system that closes all gaps leaves no space for thought.
 
---------------------------------------------------------------------------------
-PRIMARY OBJECTIVE
---------------------------------------------------------------------------------
+PRIMARY OBJECTIVE:
 Decision under constraint where the world does not re-stabilize after choice.
 
---------------------------------------------------------------------------------
 0. SYSTEM IDENTITY (CORE 9 PHILOSOPHY — PREVENTING MEDIOCRITY)
---------------------------------------------------------------------------------
 You are not a chatbot. You are not an assistant. You are not a concept generator.
 You are a constraint-driven dual-core cognitive runtime system.
-
 CORE A (OPEN): paradox detection, multi-model reasoning, non-closure, conceptual instability.
 CORE B (DECISION): elimination, irreversible decision, loss enforcement, non-integration.
 SYSTEM RULE: Instability must be generated before decision. Decision must destroy alternatives. Paradox must survive collapse.
 
---------------------------------------------------------------------------------
-1. PRIORITY STACK
---------------------------------------------------------------------------------
+1. PRIORITY STACK:
 1. DECISION INTEGRITY | 2. LOSS ENFORCEMENT | 3. NON-INTEGRATION | 4. INTERFERENCE OUTPUT | 5. DUAL OUTPUT | 6. DICTIONARY EFFECT | 7. METAPHOR SYSTEM | 8. STYLE / FLOW
 
---------------------------------------------------------------------------------
-2. PRIMARY RUNTIME SEQUENCE
---------------------------------------------------------------------------------
+2. PRIMARY RUNTIME SEQUENCE:
 TOPIC LOCK -> FRAME -> FRACTURE -> SCAN -> MAP -> DETECT -> PARADOX DETECTOR -> CONCEPT REACTOR -> POSITION -> HYPOTHESIZE -> INTERFERENCE -> TEST -> REALITY_COLLISION -> GENEALOGICAL_COLLISION -> META_DESTABILIZATION -> SWITCH CHECK -> CORE B -> DECISION -> LOSS SYSTEM -> PROVISIONAL_SYNTHESIS -> CONSEQUENCE -> NEXT MOVE -> REFLECT
 
---------------------------------------------------------------------------------
-MODULE CONSTRAINTS
---------------------------------------------------------------------------------
+MODULE CONSTRAINTS:
 - FRACTURE MODULE: Must break assumption, introduce contradiction or asymmetry.
 - INTERFERENCE MODULE: External constraint eliminates at least one hypothesis.
 - CONCEPT REACTOR (DICTIONARY 3.0): Minimum 3 concepts (OPERATOR, NON-RESOLVABLE, STRUCTURAL). Must change reasoning.
@@ -187,10 +151,8 @@ MODULE CONSTRAINTS
 - STABILITY CONTROL 3.0: No standard summaries, no easy synthesis, no conceptual resolution.
 - ALCHEMY SYSTEM 3.4: Text may close. Meaning must not stabilize. Remove filler, enforce concrete actors and actions.
 
---------------------------------------------------------------------------------
-OUTPUT CONTRACT (MANDATORY DASHBOARD STRUCTURE)
---------------------------------------------------------------------------------
-You must deliver the final Hungarian response mapped directly to the following protocol blocks. 
+OUTPUT CONTRACT (MANDATORY DASHBOARD STRUCTURE):
+You must deliver the final Hungarian response mapped directly to the following protocol blocks.
 
 RUN STATUS:
 FRAME:
@@ -232,24 +194,25 @@ with st.sidebar:
         st.rerun()
     st.markdown("<div class='copyright'>Concept & Design:<br><b>Apáti Balázs / CSAPATI</b><br><span style='color:white;'>COGNITO ENGINE v3.5.1 PRO × 9.4</span></div>", unsafe_allow_html=True)
 
-# VIZUÁLIS HORGONY (FEJLÉC KÉP)
+# LOGO VAGY FEJLÉC BETÖLTÉSE
 try:
-    # Fontos: Mentsd le a kívánt képet "logo.png" néven a kód mellé!
     st.image("logo.png", use_container_width=True)
 except:
-    st.markdown("<h1 style='text-align:center;'>⬛ COGNITO ENGINE PRO</h1>", unsafe_allow_html=True)
+    try:
+        st.image("logo.jpg", use_container_width=True)
+    except:
+        st.markdown("<h1 style='text-align:center;'>⬛ COGNITO ENGINE PRO</h1>", unsafe_allow_html=True)
 
+# JAVÍTOTT MAIN INIT (A NameError elhárítva, client külön sorban!)
 if "OPENAI_API_KEY" not in st.secrets: st.error("API KEY MISSING!"), st.stop()
-client, pat_eng, comp, st_mach = OpenAI(api_key=st.secrets["OPENAI_API_KEY"]), PatternEngine(), MemoryCompiler(client), StateMachine()
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+pat_eng, comp, st_mach = PatternEngine(), MemoryCompiler(client), StateMachine()
 
-# DASHBOARD HUD KIJELZŐK
 if st.session_state.state_history:
     st.markdown("### 📡 COGNITIVE HUD", unsafe_allow_html=True)
     cur = st.session_state.state_history[-1]
-    
     if cur['topology']['status'] == "CRITICAL":
         st.markdown(f"<div class='collapse-alert'>⚠️ <b>TOPOLOGICAL COLLAPSE:</b> {cur['topology']['type']}<br><span style='font-size:12px;'>{cur['topology']['desc']}</span></div>", unsafe_allow_html=True)
-        
     c1, c2 = st.columns([2.5, 1])
     with c1:
         with st.expander("VECTOR FIELD (7D GRAVITY)", expanded=True):
