@@ -1,5 +1,5 @@
 # ==============================================================================
-# COGNITO ARCHITECTURE v3.0 — AI INTEGRATED RUNTIME
+# COGNITO ARCHITECTURE v3.1 — AI INTEGRATED RUNTIME + CHAT UI
 # Concept & Design: Apáti Balázs / CSAPATI
 # ==============================================================================
 
@@ -12,7 +12,7 @@ from openai import OpenAI
 # ==============================================================================
 # PAGE CONFIG & CSS
 # ==============================================================================
-st.set_page_config(page_title="COGNITO ARCHITECTURE v3.0", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="COGNITO ARCHITECTURE v3.1", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
@@ -25,8 +25,9 @@ h1, h2, h3 { font-family: 'Orbitron', sans-serif !important; letter-spacing: 1px
 .stButton > button { width: 100%; background: linear-gradient(90deg, #00ffb4, #00bfff); color: black; font-weight: bold; border: none; border-radius: 12px; padding: 14px; transition: 0.3s; box-shadow: 0 0 25px rgba(0,255,180,0.3); }
 .stButton > button:hover { transform: scale(1.02); box-shadow: 0 0 40px rgba(0,255,180,0.5); }
 section[data-testid="stSidebar"] { background: rgba(10,10,10,0.95); border-right: 1px solid rgba(255,255,255,0.05); }
-pre { background: #0a0a0a !important; border-radius: 12px !important; border: 1px solid rgba(0,255,180,0.1); white-space: pre-wrap !important; }
 .stTabs [role="tab"] { background: rgba(255,255,255,0.03); border-radius: 10px; margin-right: 5px; }
+/* AI Chat Bubble formázás */
+.stChatMessage { background-color: rgba(20, 20, 20, 0.8) !important; border: 1px solid rgba(0,255,180,0.3) !important; border-radius: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -35,7 +36,6 @@ pre { background: #0a0a0a !important; border-radius: 12px !important; border: 1p
 # ==============================================================================
 def calculate_metrics(text):
     if not text: return 0, 0
-    
     pos_markers = ["stabil", "biztonságos", "siker", "hatékony", "nyereség", "támogatás", "növekedés"]
     neg_markers = ["összeomlás", "válság", "veszteség", "instabil", "hiba", "kockázat", "ellentmondás", "korrupció"]
     contrast_words = ["de", "azonban", "mégis", "viszont", "ellenben", "noha"]
@@ -57,21 +57,21 @@ def calculate_metrics(text):
 # ==============================================================================
 with st.sidebar:
     st.markdown("## ⚙️ SYSTEM INIT")
-    st.caption("COGNITO RUNTIME v3.0 [AI ACTIVE]")
+    st.caption("COGNITO RUNTIME v3.1 [AI ACTIVE]")
     st.divider()
     dark_mode = st.toggle("💀 DARK MODE")
     research_mode = st.toggle("🌐 WEB AUDIT")
-    st.success("API CONNECTION STANDBY")
+    st.success("API CONNECTION SECURED")
 
 # ==============================================================================
 # MAIN UI
 # ==============================================================================
 st.title("⬛ COGNITO POST-MONOLITH")
-st.caption("Execution Runtime v3.0 | LIVE AI INTEGRATION")
+st.caption("Execution Runtime v3.1 | LIVE CHAT UI INTEGRATION")
 
 st.markdown("""
 <div class="terminal-box">
-A rendszer mostantól egy élő LLM motorral (OpenAI) dolgozik. Strukturális elemzést végez a COGNITO direktívák alapján.
+A rendszer felkészült. Add meg a vizsgálandó szöveget, a fizikai paramétereket, és a COGNITO motor generál egy átfogó, formázott kognitív jelentést.
 </div>
 """, unsafe_allow_html=True)
 st.divider()
@@ -104,11 +104,11 @@ if run and topic_input:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     score, entropy = calculate_metrics(topic_input)
 
-    st.info("🧠 Csatlakozás a kognitív hálózathoz... A rendszer generálja a választ...")
+    st.info("🧠 Csatlakozás a kognitív hálózathoz... Mélyelemzés generálása folyamatban...")
     
     try:
         system_prompt = f"""
-        Te a COGNITO SYSTEM vagy, egy poszt-monolit kognitív elemző motor. 
+        Te a COGNITO SYSTEM vagy, egy professzionális, poszt-monolit kognitív elemző motor. 
         Működési szabályaid:
         1. STRUCTURE OVER NARRATIVE: A tényleges struktúrát vizsgálod, nem a felszínt.
         2. CONTRADICTION MUST SURVIVE: Nem oldod fel a paradoxonokat, hanem rájuk mutatsz.
@@ -120,16 +120,19 @@ if run and topic_input:
         - Ritmus (Rhythm): {rhythm}
         - Kimeneti formátum: {output_mode}
         
-        Elemzendő input típusa: {input_type}. 
         Mért nyomás (Tension Score): {score}, Entrópia: {entropy}.
-        Írj magyar nyelven egy kb. 150-200 szavas kognitív elemzést az alábbi szövegről, SZIGORÚAN betartva a beállított fizikai paramétereket és formátumot! Ne magyarázkodj, csak a jelentést add vissza.
+        
+        FELADAT: 
+        Készíts egy átfogó, MÉLYSÉGI ELEMZÉST (kb. 300-400 szó)! 
+        KÖTELEZŐ formázás: Használj tagolt bekezdéseket, Markdown vastagítást a kulcsszavaknál, és felsorolásokat (bullet points), hogy vizuálisan is olvasható legyen a jelentés. 
+        TILOS egyetlen egybefüggő szövegtömbben írnod. Reflektálj a fizikai paraméterekre a stílusoddal!
         """
 
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Szöveg: {topic_input}"}
+                {"role": "user", "content": f"Elemezd ezt az {input_type} típusú szöveget:\n\n{topic_input}"}
             ],
             temperature=0.7
         )
@@ -142,11 +145,16 @@ if run and topic_input:
         c1, c2, c3 = st.columns(3)
         c1.metric("TENSION SCORE", score)
         c2.metric("ENTROPY", entropy)
-        c3.metric("AI ENGINE", "ONLINE (GPT)")
+        c3.metric("AI ENGINE", "ONLINE (GPT-4o)")
         st.divider()
 
         st.subheader("🧠 LIVE COGNITO AI REPORT")
-        st.code(ai_output, language="text")
+        
+        # ITT VAN A VARÁZSLAT: Chat Message vizualizáció, szép sortörésekkel!
+        with st.chat_message("assistant", avatar="⬛"):
+            st.markdown(ai_output)
+            
+        st.divider()
         st.download_button("💾 DOWNLOAD AI REPORT", data=ai_output, file_name="cognito_ai_report.txt", mime="text/plain")
 
     except Exception as e:
@@ -154,3 +162,4 @@ if run and topic_input:
 
 elif run:
     st.error("❌ Nincs input.")
+    
