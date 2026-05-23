@@ -1,5 +1,4 @@
-# ==============================================================================
-# COGNITO ARCHITECTURE v3.1 — AI INTEGRATED RUNTIME + CHAT UI
+COGNITO ARCHITECTURE v3.1 — AI INTEGRATED RUNTIME + CHAT UI
 # Concept & Design: Apáti Balázs / CSAPATI
 # ==============================================================================
 
