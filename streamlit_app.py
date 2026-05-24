@@ -1039,6 +1039,15 @@ if st.session_state.state_history:
 user_query = None
 is_init = False
 
+# =============================================================================
+# INPUT
+# =============================================================================
+
+import tempfile
+
+user_query = None
+is_init = False
+
 
 # =============================================================================
 # INITIAL INPUT MODE
@@ -1065,36 +1074,39 @@ if not st.session_state.chat_messages:
 
         if audio is not None:
 
-            if (
-                "last_audio_id" not in st.session_state
-                or
-                st.session_state.last_audio_id != audio.id
-            ):
+            try:
 
-                st.session_state.last_audio_id = audio.id
+                audio_bytes = audio.read()
 
-                try:
+                st.success(
+                    f"🎤 Audio rögzítve ({len(audio_bytes)} bytes)"
+                )
+
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=".wav"
+                ) as tmp_file:
+
+                    tmp_file.write(audio_bytes)
+
+                    tmp_path = tmp_file.name
+
+                with open(tmp_path, "rb") as audio_file:
 
                     transcript = client.audio.transcriptions.create(
                         model="whisper-1",
-                        file=audio
+                        file=audio_file
                     )
 
-                    topic_input = transcript.text
+                topic_input = transcript.text
 
-                    st.success(
-                        "🎤 Voice input dekódolva."
-                    )
+                st.success("✅ Whisper dekódolás sikeres")
 
-                    st.info(
-                        transcript.text
-                    )
+                st.info(transcript.text)
 
-                except Exception as e:
+            except Exception as e:
 
-                    st.error(
-                        f"Whisper hiba: {e}"
-                    )
+                st.error(f"WHISPER ERROR: {e}")
 
     if execute_clicked and topic_input:
 
@@ -1135,36 +1147,39 @@ else:
 
         if audio is not None:
 
-            if (
-                "last_audio_id" not in st.session_state
-                or
-                st.session_state.last_audio_id != audio.id
-            ):
+            try:
 
-                st.session_state.last_audio_id = audio.id
+                audio_bytes = audio.read()
 
-                try:
+                st.success(
+                    f"🎤 Audio rögzítve ({len(audio_bytes)} bytes)"
+                )
+
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=".wav"
+                ) as tmp_file:
+
+                    tmp_file.write(audio_bytes)
+
+                    tmp_path = tmp_file.name
+
+                with open(tmp_path, "rb") as audio_file:
 
                     transcript = client.audio.transcriptions.create(
                         model="whisper-1",
-                        file=audio
+                        file=audio_file
                     )
 
-                    user_query = transcript.text
+                user_query = transcript.text
 
-                    st.success(
-                        "🎤 Voice input dekódolva."
-                    )
+                st.success("✅ Whisper dekódolás sikeres")
 
-                    st.info(
-                        transcript.text
-                    )
+                st.info(transcript.text)
 
-                except Exception as e:
+            except Exception as e:
 
-                    st.error(
-                        f"Whisper hiba: {e}"
-    )
+                st.error(f"WHISPER ERROR: {e}")
 # =============================================================================
 # EXECUTION
 # =============================================================================
