@@ -1359,7 +1359,12 @@ if execute_clicked:
 # EXECUTION ENGINE
 # =============================================================================
 
-if user_query:
+execute_clicked = st.button(
+    "⚡ EXECUTE COGNITIVE PIPELINE",
+    key="execute_pipeline_button"
+)
+
+if execute_clicked and user_query:
 
     # =========================================================================
     # STORE USER MESSAGE
