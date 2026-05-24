@@ -63,7 +63,8 @@ class StateMachine:
         state["topology"] = self.evaluate_collapse_topology(state["tensions"], len(anchors))
         history.append(state)
         return history
-        class WritingEngine:
+
+class WritingEngine:
     @staticmethod
     def generate_prompt(state, mode, web, out_fmt, switches, cur_state, pat):
         sw_txt = "\n".join([f"{k}={v}" for k, v in switches.items()])
@@ -80,11 +81,9 @@ MODULE CONSTRAINTS:
 - VALIDATION: Every output must carry a truth-value tag.
 OUTPUT CONTRACT: [RUN STATUS], [FRAME], [PARADOX], [DECISION], [LOSS], [WRITING OUTPUT], [RESIDUAL TENSION]."""
 
-# --- INITIALIZÁLÁS ---
 for key in ["state_history", "chat_messages", "last_audio", "total_in_tokens", "total_out_tokens", "total_usd"]:
     if key not in st.session_state: st.session_state[key] = [] if "messages" in key or "history" in key else 0
 
-# --- SIDEBAR ---
 with st.sidebar:
     st.markdown("### ⚙️ INIT MODULE 9.4")
     col1, col2 = st.columns([4, 1])
@@ -100,27 +99,23 @@ with st.sidebar:
     st.divider()
     st.markdown(f"TOTAL: ${st.session_state.total_usd:.4f} | IN: {st.session_state.total_in_tokens} | OUT: {st.session_state.total_out_tokens}")
     if st.button("🗑️ PURGE MEMORY"): st.session_state.clear(), st.rerun()
-        # --- FŐ LOGIKA ---
+
 if "OPENAI_API_KEY" in st.secrets:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     pat_eng, comp, st_mach = PatternEngine(), MemoryCompiler(client), StateMachine()
-    
     if st.session_state.state_history:
         cur = st.session_state.state_history[-1]
         with st.expander("VECTOR FIELD (7D GRAVITY)", expanded=True):
             cols = st.columns(3)
             for i, (k, v) in enumerate(cur['tensions'].items()):
                 cols[i%3].metric(k, v, delta=f"{cur['deltas'][k]:+.2f}")
-    
     if txt := st.chat_input("Új input a reaktornak..."):
         st.session_state.chat_messages.append({"role": "user", "content": txt})
         with st.chat_message("user"): st.markdown(txt)
-        
         pat_data = pat_eng.scan(txt)
         new_json, comp_use = comp.compile_state(txt, pat_data)
         update_cost(comp_use)
         st.session_state.state_history = st_mach.update(st.session_state.state_history, new_json, pat_data['entropy'])
-        
         prompt = WritingEngine.generate_prompt(run_state, run_mode, web_mode, out_format, switches, st.session_state.state_history[-1], pat_data)
         with st.chat_message("assistant"):
             try:
@@ -131,4 +126,4 @@ if "OPENAI_API_KEY" in st.secrets:
             except Exception as e:
                 st.error(f"REACTOR FAILURE: {e}")
             st.rerun()
-    
+                                                
