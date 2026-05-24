@@ -2,7 +2,7 @@ import streamlit as st
 import time, json, math, re
 from collections import Counter
 from openai import OpenAI
-from help_module.py import show_help
+from help_module import show_help
 
 
 st.set_page_config(page_title="COGNITO ENGINE v3.5.1 × 9.4", layout="wide", initial_sidebar_state="expanded")
