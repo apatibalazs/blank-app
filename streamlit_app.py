@@ -1114,16 +1114,15 @@ if "is_processing" not in st.session_state:
 
 
 # =============================================================================
-# INPUT MODULE
-# CLEAN SINGLE-INPUT VERSION
+# INPUT + EXECUTION RUNTIME
+# CLEAN REBUILD VERSION
 # =============================================================================
 
 user_query = None
-is_init = False
 
-# -----------------------------------------------------------------------------
+# =============================================================================
 # SESSION STATE
-# -----------------------------------------------------------------------------
+# =============================================================================
 
 if "input_text" not in st.session_state:
     st.session_state.input_text = ""
@@ -1133,6 +1132,7 @@ if "last_audio_id" not in st.session_state:
 
 if "last_uploaded_file" not in st.session_state:
     st.session_state.last_uploaded_file = None
+
 
 # =============================================================================
 # CHAT HISTORY
@@ -1149,21 +1149,27 @@ if st.session_state.chat_messages:
 
             st.markdown(msg["content"])
 
+
 # =============================================================================
-# MAIN INPUT
+# MAIN TEXT INPUT
 # =============================================================================
 
 st.session_state.input_text = st.text_area(
     "RENDSZER-INPUT",
     value=st.session_state.input_text,
-    height=150
+    height=180,
+    key="main_input_box"
 )
 
-# -----------------------------------------------------------------------------
-# AUDIO INPUT
-# -----------------------------------------------------------------------------
 
-audio = st.audio_input("🎤 Voice Input")
+# =============================================================================
+# AUDIO INPUT
+# =============================================================================
+
+audio = st.audio_input(
+    "🎤 Voice Input",
+    key="main_audio_input"
+)
 
 if audio is not None:
 
@@ -1182,15 +1188,17 @@ if audio is not None:
 
             st.session_state.input_text = transcript.text
 
-            st.rerun()
+        st.rerun()
 
-# -----------------------------------------------------------------------------
-# FILE UPLOAD
-# -----------------------------------------------------------------------------
+
+# =============================================================================
+# FILE INPUT
+# =============================================================================
 
 uploaded_file = st.file_uploader(
-    "📎 File Upload",
-    type=["txt", "pdf", "png", "jpg", "jpeg"]
+    "📎 FILE / IMAGE INPUT",
+    type=["txt", "pdf", "png", "jpg", "jpeg"],
+    key="main_file_upload"
 )
 
 if uploaded_file is not None:
@@ -1203,7 +1211,10 @@ if uploaded_file is not None:
 
         st.success(f"✅ Feltöltve: {uploaded_file.name}")
 
+        # ---------------------------------------------------------------------
         # TXT
+        # ---------------------------------------------------------------------
+
         if uploaded_file.type == "text/plain":
 
             file_text = uploaded_file.read().decode("utf-8")
@@ -1219,197 +1230,69 @@ if uploaded_file is not None:
 
             st.rerun()
 
-        # PDF
-        elif uploaded_file.type == "application/pdf":
-
-            st.warning("⚠️ PDF parser még nincs implementálva.")
-
+        # ---------------------------------------------------------------------
         # IMAGE
+        # ---------------------------------------------------------------------
+
         elif uploaded_file.type.startswith("image/"):
 
-            st.image(uploaded_file)
+            st.image(
+                uploaded_file,
+                use_container_width=True
+            )
 
-            st.warning("⚠️ Vision parser még nincs implementálva.")
+            st.warning(
+                "⚠️ Vision parser még nincs implementálva."
+            )
 
-# -----------------------------------------------------------------------------
-# EXECUTION
-# -----------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
+        # PDF
+        # ---------------------------------------------------------------------
 
-if st.button("⚡ EXECUTE COGNITIVE PIPELINE"):
+        elif uploaded_file.type == "application/pdf":
+
+            st.warning(
+                "⚠️ PDF parser még nincs implementálva."
+            )
+
+
+# =============================================================================
+# EXECUTION BUTTON
+# =============================================================================
+
+execute_clicked = st.button(
+    "⚡ EXECUTE COGNITIVE PIPELINE",
+    key="main_execute_button"
+)
+
+if execute_clicked:
 
     if st.session_state.input_text.strip():
 
         user_query = st.session_state.input_text
 
-        st.session_state.input_text = ""
-
-        is_init = True
-
-    # -------------------------------------------------------------------------
-    # EXECUTION BUTTON
-    # -------------------------------------------------------------------------
-
-    if (
-        st.button("⚡ EXECUTE COGNITIVE PIPELINE")
-        and topic_input
-        and not st.session_state.is_processing
-    ):
-
-        st.session_state.is_processing = True
-
-        user_query = topic_input
-        is_init = True
-
 
 # =============================================================================
-# CHAT MODE
-# =============================================================================
-
-else:
-
-    for msg in st.session_state.chat_messages:
-
-        with st.chat_message(
-            msg["role"],
-            avatar="⬛" if msg["role"] == "assistant" else "👤"
-        ):
-
-            st.markdown(msg["content"])
-
-    # -------------------------------------------------------------------------
-    # TEXT INPUT
-    # -------------------------------------------------------------------------
-
-    text_query = st.chat_input(
-        "Új input a futó rendszernek..."
-    )
-
-    if text_query and not st.session_state.is_processing:
-
-        st.session_state.is_processing = True
-
-        user_query = text_query
-
-    # -------------------------------------------------------------------------
-    # AUDIO INPUT
-    # -------------------------------------------------------------------------
-
-    audio = st.audio_input("🎤 Voice Input")
-
-    if audio is not None:
-
-        audio_id = f"{audio.name}_{audio.size}"
-
-        if st.session_state.last_audio_id != audio_id:
-
-            st.session_state.last_audio_id = audio_id
-
-            with st.spinner("🎧 Audio feldolgozás..."):
-
-                transcript = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio
-                )
-
-                user_query = transcript.text
-
-                st.session_state.is_processing = True
-
-                st.success("✅ Audio transcribed")
-
-    # -------------------------------------------------------------------------
-    # FILE UPLOAD
-    # -------------------------------------------------------------------------
-
-    uploaded_file = st.file_uploader(
-        "📎 File Upload",
-        type=["txt", "pdf", "png", "jpg", "jpeg"],
-        key="chat_upload"
-    )
-
-    if uploaded_file is not None:
-
-        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-
-        if st.session_state.last_uploaded_file != file_id:
-
-            st.session_state.last_uploaded_file = file_id
-
-            st.success(f"✅ Feltöltve: {uploaded_file.name}")
-
-            # -----------------------------------------------------------------
-            # TXT PARSER
-            # -----------------------------------------------------------------
-
-            if uploaded_file.type == "text/plain":
-
-                file_text = uploaded_file.read().decode("utf-8")
-
-                user_query = f"""
-
-FILE INPUT DETECTED
-
---- FILE CONTENT START ---
-
-{file_text}
-
---- FILE CONTENT END ---
-"""
-
-                st.session_state.is_processing = True
-
-            # -----------------------------------------------------------------
-            # PDF PLACEHOLDER
-            # -----------------------------------------------------------------
-
-            elif uploaded_file.type == "application/pdf":
-
-                user_query = f"""
-
-PDF FILE DETECTED:
-{uploaded_file.name}
-
-⚠️ PDF parser még nincs implementálva.
-"""
-
-                st.session_state.is_processing = True
-
-            # -----------------------------------------------------------------
-            # IMAGE PLACEHOLDER
-            # -----------------------------------------------------------------
-
-            elif uploaded_file.type.startswith("image/"):
-
-                st.image(uploaded_file)
-
-                user_query = f"""
-
-IMAGE FILE DETECTED:
-{uploaded_file.name}
-
-⚠️ Vision parser még nincs implementálva.
-"""
-
-                st.session_state.is_processing = True
-# =============================================================================
-# EXECUTION
+# EXECUTION ENGINE
 # =============================================================================
 
 if user_query:
 
-    if not is_init:
+    st.session_state.chat_messages.append({
+        "role": "user",
+        "content": user_query
+    })
 
-        st.session_state.chat_messages.append({
-            "role": "user",
-            "content": user_query
-        })
+    with st.chat_message(
+        "user",
+        avatar="👤"
+    ):
 
-        with st.chat_message(
-            "user",
-            avatar="👤"
-        ):
+        st.markdown(user_query)
 
-            st.markdown(user_query)
+    # =========================================================================
+    # COGNITIVE STATUS
+    # =========================================================================
 
     with st.status(
         "⚙️ Kognitív Reaktor Fut...",
@@ -1428,13 +1311,17 @@ if user_query:
         st.session_state.state_history = st_mach.update(
             st.session_state.state_history,
             new_json,
-            pat_data['entropy']
+            pat_data["entropy"]
         )
 
         status.update(
             label="✅ OMNI Dekódolás kész.",
             state="complete"
         )
+
+    # =========================================================================
+    # PROMPT BUILD
+    # =========================================================================
 
     prompt = WritingEngine.generate_prompt(
         run_state,
@@ -1445,6 +1332,10 @@ if user_query:
         st.session_state.state_history[-1],
         pat_data
     )
+
+    # =========================================================================
+    # MODEL EXECUTION
+    # =========================================================================
 
     with st.chat_message(
         "assistant",
@@ -1475,5 +1366,15 @@ if user_query:
             "role": "assistant",
             "content": out
         })
+
+    # =========================================================================
+    # CLEAN RESET
+    # =========================================================================
+
+    st.session_state.input_text = ""
+
+    st.session_state.last_audio_id = None
+
+    st.session_state.last_uploaded_file = None
 
     st.rerun()
