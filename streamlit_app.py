@@ -1115,7 +1115,7 @@ if "is_processing" not in st.session_state:
 
 # =============================================================================
 # INPUT + EXECUTION RUNTIME
-# CLEAN REBUILD VERSION
+# STABLE WORKING VERSION
 # =============================================================================
 
 user_query = None
@@ -1123,6 +1123,9 @@ user_query = None
 # =============================================================================
 # SESSION STATE
 # =============================================================================
+
+if "main_input_box" not in st.session_state:
+    st.session_state.main_input_box = ""
 
 if "input_text" not in st.session_state:
     st.session_state.input_text = ""
@@ -1151,14 +1154,21 @@ if st.session_state.chat_messages:
 
 
 # =============================================================================
-# MAIN TEXT INPUT
+# MAIN INPUT FIELD
 # =============================================================================
 
-st.session_state.input_text = st.text_area(
+st.text_area(
     "RENDSZER-INPUT",
-    value=st.session_state.input_text,
     height=180,
     key="main_input_box"
+)
+
+# -------------------------------------------------------------------------
+# Sync widget -> runtime state
+# -------------------------------------------------------------------------
+
+st.session_state.input_text = (
+    st.session_state.main_input_box
 )
 
 
@@ -1175,6 +1185,10 @@ if audio is not None:
 
     audio_id = f"{audio.name}_{audio.size}"
 
+    # ---------------------------------------------------------------------
+    # Prevent infinite rerun loop
+    # ---------------------------------------------------------------------
+
     if st.session_state.last_audio_id != audio_id:
 
         st.session_state.last_audio_id = audio_id
@@ -1186,18 +1200,34 @@ if audio is not None:
                 file=audio
             )
 
-            st.session_state.input_text = transcript.text
+            # -------------------------------------------------------------
+            # Write transcript directly into widget state
+            # -------------------------------------------------------------
+
+            st.session_state.main_input_box = (
+                transcript.text
+            )
+
+            st.session_state.input_text = (
+                transcript.text
+            )
 
         st.rerun()
 
 
 # =============================================================================
-# FILE INPUT
+# FILE UPLOADER
 # =============================================================================
 
 uploaded_file = st.file_uploader(
     "📎 FILE / IMAGE INPUT",
-    type=["txt", "pdf", "png", "jpg", "jpeg"],
+    type=[
+        "txt",
+        "pdf",
+        "png",
+        "jpg",
+        "jpeg"
+    ],
     key="main_file_upload"
 )
 
@@ -1205,21 +1235,29 @@ if uploaded_file is not None:
 
     file_id = f"{uploaded_file.name}_{uploaded_file.size}"
 
+    # ---------------------------------------------------------------------
+    # Prevent duplicate reruns
+    # ---------------------------------------------------------------------
+
     if st.session_state.last_uploaded_file != file_id:
 
         st.session_state.last_uploaded_file = file_id
 
-        st.success(f"✅ Feltöltve: {uploaded_file.name}")
+        st.success(
+            f"✅ Feltöltve: {uploaded_file.name}"
+        )
 
-        # ---------------------------------------------------------------------
-        # TXT
-        # ---------------------------------------------------------------------
+        # ================================================================
+        # TXT PARSER
+        # ================================================================
 
         if uploaded_file.type == "text/plain":
 
-            file_text = uploaded_file.read().decode("utf-8")
+            file_text = uploaded_file.read().decode(
+                "utf-8"
+            )
 
-            st.session_state.input_text += f"""
+            st.session_state.main_input_box += f"""
 
 --- FILE CONTENT START ---
 
@@ -1228,11 +1266,15 @@ if uploaded_file is not None:
 --- FILE CONTENT END ---
 """
 
+            st.session_state.input_text = (
+                st.session_state.main_input_box
+            )
+
             st.rerun()
 
-        # ---------------------------------------------------------------------
-        # IMAGE
-        # ---------------------------------------------------------------------
+        # ================================================================
+        # IMAGE PREVIEW
+        # ================================================================
 
         elif uploaded_file.type.startswith("image/"):
 
@@ -1245,9 +1287,9 @@ if uploaded_file is not None:
                 "⚠️ Vision parser még nincs implementálva."
             )
 
-        # ---------------------------------------------------------------------
-        # PDF
-        # ---------------------------------------------------------------------
+        # ================================================================
+        # PDF PLACEHOLDER
+        # ================================================================
 
         elif uploaded_file.type == "application/pdf":
 
@@ -1269,7 +1311,9 @@ if execute_clicked:
 
     if st.session_state.input_text.strip():
 
-        user_query = st.session_state.input_text
+        user_query = (
+            st.session_state.input_text
+        )
 
 
 # =============================================================================
@@ -1277,6 +1321,10 @@ if execute_clicked:
 # =============================================================================
 
 if user_query:
+
+    # =========================================================================
+    # STORE USER MESSAGE
+    # =========================================================================
 
     st.session_state.chat_messages.append({
         "role": "user",
@@ -1299,7 +1347,9 @@ if user_query:
         expanded=True
     ) as status:
 
-        pat_data = pat_eng.scan(user_query)
+        pat_data = pat_eng.scan(
+            user_query
+        )
 
         new_json, comp_use = comp.compile_state(
             user_query,
@@ -1308,10 +1358,12 @@ if user_query:
 
         update_cost(comp_use)
 
-        st.session_state.state_history = st_mach.update(
-            st.session_state.state_history,
-            new_json,
-            pat_data["entropy"]
+        st.session_state.state_history = (
+            st_mach.update(
+                st.session_state.state_history,
+                new_json,
+                pat_data["entropy"]
+            )
         )
 
         status.update(
@@ -1370,6 +1422,8 @@ if user_query:
     # =========================================================================
     # CLEAN RESET
     # =========================================================================
+
+    st.session_state.main_input_box = ""
 
     st.session_state.input_text = ""
 
