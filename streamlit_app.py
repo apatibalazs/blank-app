@@ -1670,7 +1670,6 @@ if execute_clicked and user_query:
     # =========================================================================
     # MODEL EXECUTION
     # =========================================================================
-
     resp = client.chat.completions.create(
 
         model="gpt-4o",
