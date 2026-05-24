@@ -1336,7 +1336,7 @@ if audio is not None:
         st.rerun()
 
 
-
+user_query = st.session_state.input_text.strip()
 # ============================================================
 # EXECUTION BUTTON
 # ============================================================
