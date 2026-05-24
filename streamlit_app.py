@@ -1337,25 +1337,25 @@ if audio is not None:
 
 
 
+# ============================================================
 # EXECUTION BUTTON
-# =============================================================================
+# ============================================================
 
 execute_clicked = st.button(
     "⚡ EXECUTE COGNITIVE PIPELINE",
-    key="main_execute_button"
+    key="main_execute_button",
+    use_container_width=True
 )
 
-if execute_clicked:
+# ============================================================
+# EXECUTION ENGINE
+# ============================================================
 
-    if st.session_state.input_text.strip():
+if execute_clicked and user_query:
 
-        user_query = (
-            st.session_state.input_text
-        )
-
-    # =========================================================================
+    # ========================================================
     # STORE USER MESSAGE
-    # =========================================================================
+    # ========================================================
 
     st.session_state.chat_messages.append({
         "role": "user",
@@ -1366,12 +1366,11 @@ if execute_clicked:
         "user",
         avatar="👤"
     ):
-
         st.markdown(user_query)
 
-    # =========================================================================
+    # ========================================================
     # COGNITIVE STATUS
-    # =========================================================================
+    # ========================================================
 
     with st.status(
         "⚙️ Kognitív Reaktor Fut...",
@@ -1402,9 +1401,9 @@ if execute_clicked:
             state="complete"
         )
 
-    # =========================================================================
+    # ========================================================
     # PROMPT BUILD
-    # =========================================================================
+    # ========================================================
 
     prompt = WritingEngine.generate_prompt(
         run_state,
@@ -1416,240 +1415,64 @@ if execute_clicked:
         pat_data
     )
 
-    # =============================================================================
-# # =============================================================================
-
-if user_query:
-
-    # =========================================================================
-    # USER MESSAGE
-    # =========================================================================
-
-    if not is_init:
-
-        st.session_state.chat_messages.append({
-            "role": "user",
-            "content": user_query
-        })
-
-        with st.chat_message(
-            "user",
-            avatar="👤"
-        ):
-
-            st.markdown(user_query)
-
-    # =========================================================================
-    # COGNITIVE STATUS
-    # =========================================================================
-
-    with st.status(
-        "⚙️ Kognitív Reaktor Fut...",
-        expanded=True
-    ) as status:
-
-        pat_data = pat_eng.scan(
-            user_query
-        )
-
-        new_json, comp_use = comp.compile_state(
-            user_query,
-            pat_data
-        )
-
-        update_cost(comp_use)
-
-        st.session_state.state_history = (
-            st_mach.update(
-                st.session_state.state_history,
-                new_json,
-                pat_data['entropy']
-            )
-        )
-
-        status.update(
-            label="✅ OMNI Dekódolás kész.",
-            state="complete"
-        )
-
-    # =========================================================================
-    # PROMPT BUILD
-    # =========================================================================
-
-    prompt = WritingEngine.generate_prompt(
-        run_state,
-        run_mode,
-        web_mode,
-        out_format,
-        switches,
-        st.session_state.state_history[-1],
-        pat_data
-    )    
-    # =============================================================================
-# EXECUTION
-# =============================================================================
-
-if user_query:
-
-    # =========================================================================
-    # USER MESSAGE
-    # =========================================================================
-
-    if not is_init:
-
-        st.session_state.chat_messages.append({
-            "role": "user",
-            "content": user_query
-        })
-
-        with st.chat_message(
-            "user",
-            avatar="👤"
-        ):
-
-            st.markdown(user_query)
-
-
-    # =============================================================================
-    # PROMPT BUILD
-    # =============================================================================
-
-    prompt = WritingEngine.generate_prompt(
-        run_state,
-        run_mode,
-        web_mode,
-        out_format,
-        switches,
-        st.session_state.state_history[-1],
-        pat_data
-    )
-
-    # =========================================================================
+    # ========================================================
     # MODEL EXECUTION
-    # =========================================================================
-
-    resp = client.chat.completions.create(
-
-        model="gpt-4o",
-
-        messages=[
-            {
-                "role": "system",
-                "content": prompt
-            },
-            {
-                "role": "user",
-                "content": user_query
-            }
-        ]
-    )
-
-    out = resp.choices[0].message.content
-
-    update_cost(resp.usage)
-
-    # =========================================================================
-    # ASSISTANT OUTPUT
-    # =========================================================================
+    # ========================================================
 
     with st.chat_message(
         "assistant",
-        avatar="⬛"
+        avatar="◼️"
     ):
+
+        resp = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": user_query
+                }
+            ]
+        )
+
+        out = resp.choices[0].message.content
+
+        update_cost(resp.usage)
 
         st.markdown(out)
 
-    # =========================================================================
-    # COPY BUTTON
-    # =========================================================================
+        # ====================================================
+        # COPY OUTPUT
+        # ====================================================
 
-    copy_text = json.dumps(out)
+        st.code(
+            out,
+            language=None
+        )
 
-    copy_button_html = f"""
-    <div style="margin-top:12px;margin-bottom:24px;">
-
-        <button
-        onclick='navigator.clipboard.writeText({copy_text})'
-        style="
-            background:#00ffb4;
-            color:black;
-            border:none;
-            padding:14px 20px;
-            border-radius:12px;
-            font-weight:bold;
-            cursor:pointer;
-            font-size:15px;
-            width:100%;
-            box-shadow:0 0 18px rgba(0,255,180,0.35);
-        ">
-            📋 COPY OUTPUT
-        </button>
-
-    </div>
-    """
-
-    st.components.v1.html(
-        copy_button_html,
-        height=90
-    )
-
-    # =========================================================================
-    # SAVE CHAT MEMORY
-    # =========================================================================
+    # ========================================================
+    # SAVE ASSISTANT MESSAGE
+    # ========================================================
 
     st.session_state.chat_messages.append({
         "role": "assistant",
         "content": out
     })
 
-    # =========================================================================
-    # SAFE RESET
-    # =========================================================================
-
-    user_query = None
+    # ========================================================
+    # CLEAR INPUT
+    # ========================================================
 
     st.session_state.input_text = ""
 
-    st.session_state.last_audio_id = None
+    st.rerun()
 
-    st.session_state.last_uploaded_file = None
-
-    st.session_state.pending_audio_text = None
-
-    st.session_state.pending_file_text = None
-
-    st.session_state.clear_input_next_run = True
-
-# =============================================================================
-# CHAT HISTORY RENDER
-# =============================================================================
-
-for msg in st.session_state.chat_messages:
-
-    if msg["role"] == "user":
-
-        with st.chat_message(
-            "user",
-            avatar="👤"
-        ):
-
-            st.markdown(msg["content"])
-
-    elif msg["role"] == "assistant":
-
-        with st.chat_message(
-            "assistant",
-            avatar="⬛"
-        ):
-
-            st.markdown(msg["content"])
-
-# =============================================================================
-# FOOTER
-# =============================================================================
+# ============================================================
+# END OF RUNTIME
+# ============================================================
 
 st.markdown("---")
-
-st.caption(
-    "COGNITO ENGINE — Multimodal Cognitive Runtime"
-)
+st.caption("COGNITO ENGINE — Multimodal Cognitive Runtime")
