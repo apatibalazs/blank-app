@@ -591,8 +591,21 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### 💸 RUNTIME COST")
-        st.markdown(f"<div class='cost-box'>TOTAL: <b>${st.session_state.total_usd:.4f}</b><br><span style='font-size:10px;color:#ccc;'>IN: {st.session_state.total_in_tokens} | OUT: {st.session_state.total_out_tokens}</span></div>", unsafe_allow_html=True)
-    <span style='font-size:10px;color:#ccc;'>IN: {st.session_state.total_in_tokens} | OUT: {st.session_state.total_out_tokens}</span></div>""", unsafe_allow_html=True)
+st.markdown(
+    f"""
+    <div class='cost-box'>
+        TOTAL:
+        <b>${st.session_state.total_usd:.4f}</b>
+        <br>
+        <span style='font-size:10px;color:#ccc;'>
+            IN: {st.session_state.total_in_tokens}
+            |
+            OUT: {st.session_state.total_out_tokens}
+        </span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)    <span style='font-size:10px;color:#ccc;'>IN: {st.session_state.total_in_tokens} | OUT: {st.session_state.total_out_tokens}</span></div>""", unsafe_allow_html=True)
 
     if st.button("🗑️ PURGE MEMORY"):
         st.session_state.state_history = []
