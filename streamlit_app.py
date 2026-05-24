@@ -1501,7 +1501,6 @@ if execute_clicked and user_query:
 
     st.session_state.input_text = ""
 
-    st.rerun()
 
 # ============================================================
 # END OF RUNTIME
