@@ -53,14 +53,15 @@ class StateMachine:
             state["tensions"][k], state["deltas"][k] = round(new_val, 2), round(new_val - old_val, 2)
         history.append(state)
         return history
-
-class WritingEngine:
+        class WritingEngine:
     @staticmethod
     def generate_prompt(state, mode, web, out_fmt, switches, pat):
         return f"COGNITO ENGINE 3.5.1 PRO. STATE: {state} | MODE: {mode}. RULE: Instability must be generated before decision."
 
 if "state_history" not in st.session_state: st.session_state.state_history = []
 if "total_usd" not in st.session_state: st.session_state.total_usd = 0.0
+if "total_in_tokens" not in st.session_state: st.session_state.total_in_tokens = 0
+if "total_out_tokens" not in st.session_state: st.session_state.total_out_tokens = 0
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 pat_eng, comp, st_mach = PatternEngine(), MemoryCompiler(client), StateMachine()
@@ -69,6 +70,14 @@ with st.sidebar:
     run_state = st.selectbox("STATE", ["FOG", "BREAK", "ALCHEMY"], index=1)
     show_help(run_state)
     audio_val = st.audio_input("Record")
+    if st.button("🗑️ PURGE MEMORY"): st.session_state.clear(), st.rerun()
+
+if st.session_state.state_history:
+    cur = st.session_state.state_history[-1]
+    with st.expander("VECTOR FIELD (7D GRAVITY)", expanded=True):
+        cols = st.columns(3)
+        for i, (k, v) in enumerate(cur['tensions'].items()):
+            cols[i%3].metric(k, v, delta=f"{cur['deltas'][k]:+.2f}")
 
 if txt := st.chat_input("Input..."):
     st.chat_message("user").markdown(txt)
@@ -77,6 +86,11 @@ if txt := st.chat_input("Input..."):
     update_cost(comp_use)
     st.session_state.state_history = st_mach.update(st.session_state.state_history, new_json, pat_data['entropy'])
     prompt = WritingEngine.generate_prompt(run_state, "BALANCED", "AUTO", "FULL TEXT", {}, pat_data)
-    resp = client.chat.completions.create(model="gpt-4o", messages=[{"role": "system", "content": prompt}, {"role": "user", "content": txt}])
-    st.chat_message("assistant").markdown(resp.choices[0].message.content)
     
+    with st.chat_message("assistant"):
+        try:
+            resp = client.chat.completions.create(model="gpt-4o", messages=[{"role": "system", "content": prompt}, {"role": "user", "content": txt}])
+            st.markdown(resp.choices[0].message.content)
+        except Exception as e:
+            st.error(f"REACTOR FAILURE: {e}")
+            
