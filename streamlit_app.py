@@ -1031,6 +1031,8 @@ if st.session_state.state_history:
 
 
 # =============================================================================
+
+# =============================================================================
 # INPUT
 # =============================================================================
 
@@ -1044,10 +1046,36 @@ if not st.session_state.chat_messages:
         height=180
     )
 
-    if (
-        st.button("⚡ EXECUTE COGNITIVE PIPELINE")
-        and topic_input
-    ):
+    col1, col2 = st.columns([4, 1])
+
+    with col1:
+
+        execute_clicked = st.button(
+            "⚡ EXECUTE COGNITIVE PIPELINE"
+        )
+
+    with col2:
+
+        audio = st.audio_input("🎤")
+
+        if audio:
+
+            try:
+
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio
+                )
+
+                topic_input = transcript.text
+
+                st.success("Voice input dekódolva.")
+
+            except Exception as e:
+
+                st.error(f"Whisper hiba: {e}")
+
+    if execute_clicked and topic_input:
 
         user_query = topic_input
         is_init = True
@@ -1063,11 +1091,38 @@ else:
 
             st.markdown(msg["content"])
 
-    user_query = st.chat_input(
-        "Új input a futó rendszernek..."
-    )
+    col1, col2 = st.columns([4, 1])
 
+    with col1:
 
+        txt = st.chat_input(
+            "Új input a futó rendszernek..."
+        )
+
+        if txt:
+
+            user_query = txt
+
+    with col2:
+
+        audio = st.audio_input("🎤")
+
+        if audio:
+
+            try:
+
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio
+                )
+
+                user_query = transcript.text
+
+                st.success("Voice input dekódolva.")
+
+            except Exception as e:
+
+                st.error(f"Whisper hiba: {e}")
 # =============================================================================
 # EXECUTION
 # =============================================================================
