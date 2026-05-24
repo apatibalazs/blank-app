@@ -1573,7 +1573,34 @@ if user_query:
 # EXECUTION
 # =============================================================================
 
-if user_query:
+        run_state,
+        run_mode,
+        web_mode,
+        out_format,
+        switches,
+        st.session_state.state_history[-1],
+        pat_data
+    )
+    #
+    # =========================================================================
+    # MODEL EXECUTION
+    # =========================================================================
+
+    # =============================================================================
+# EXECUTION TRIGGER
+# =============================================================================
+
+execute_clicked = st.button(
+    "⚡ EXECUTE COGNITIVE PIPELINE",
+    key="execute_pipeline_button",
+    use_container_width=True
+)
+
+# =============================================================================
+# EXECUTION
+# =============================================================================
+
+if execute_clicked and user_query:
 
     # =========================================================================
     # USER MESSAGE
@@ -1639,7 +1666,7 @@ if user_query:
         st.session_state.state_history[-1],
         pat_data
     )
-    #
+
     # =========================================================================
     # MODEL EXECUTION
     # =========================================================================
@@ -1676,13 +1703,13 @@ if user_query:
         st.markdown(out)
 
     # =========================================================================
-    # REAL COPY BUTTON
+    # COPY BUTTON
     # =========================================================================
 
     copy_text = json.dumps(out)
 
     copy_button_html = f"""
-    <div style="margin-top:10px;margin-bottom:20px;">
+    <div style="margin-top:12px;margin-bottom:24px;">
 
         <button
         onclick='navigator.clipboard.writeText({copy_text})'
@@ -1690,12 +1717,13 @@ if user_query:
             background:#00ffb4;
             color:black;
             border:none;
-            padding:12px 20px;
-            border-radius:10px;
+            padding:14px 20px;
+            border-radius:12px;
             font-weight:bold;
             cursor:pointer;
             font-size:15px;
             width:100%;
+            box-shadow:0 0 18px rgba(0,255,180,0.35);
         ">
             📋 COPY OUTPUT
         </button>
@@ -1705,7 +1733,7 @@ if user_query:
 
     st.components.v1.html(
         copy_button_html,
-        height=80
+        height=90
     )
 
     # =========================================================================
@@ -1734,3 +1762,37 @@ if user_query:
     st.session_state.pending_file_text = None
 
     st.session_state.clear_input_next_run = True
+
+# =============================================================================
+# CHAT HISTORY RENDER
+# =============================================================================
+
+for msg in st.session_state.chat_messages:
+
+    if msg["role"] == "user":
+
+        with st.chat_message(
+            "user",
+            avatar="👤"
+        ):
+
+            st.markdown(msg["content"])
+
+    elif msg["role"] == "assistant":
+
+        with st.chat_message(
+            "assistant",
+            avatar="⬛"
+        ):
+
+            st.markdown(msg["content"])
+
+# =============================================================================
+# FOOTER
+# =============================================================================
+
+st.markdown("---")
+
+st.caption(
+    "COGNITO ENGINE — Multimodal Cognitive Runtime"
+)
