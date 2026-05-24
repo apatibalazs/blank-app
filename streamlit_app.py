@@ -1448,31 +1448,37 @@ if execute_clicked and user_query:
         # COPY OUTPUT BUTTON
         # ====================================================
 
-        
-safe_output = output.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$")
+        safe_output = (
+            out
+            .replace("\\", "\\\\")
+            .replace("`", "\\`")
+            .replace("$", "\\$")
+        )
 
-copy_button = f"""
-<div style="margin-top:20px;">
-<button
-onclick='navigator.clipboard.writeText(`{safe_output}`)'
-style="
-width:100%;
-padding:16px;
-border:none;
-border-radius:14px;
-font-size:20px;
-font-weight:bold;
-cursor:pointer;
-background:linear-gradient(90deg,#00f5a0,#00d9ff);
-color:black;
-box-shadow:0 0 20px rgba(0,255,200,0.45);
-">
-📋 COPY OUTPUT
-</button>
-</div>
-"""
+        copy_button = f"""
+        <div style="margin-top:20px;">
+        <button
+        onclick='navigator.clipboard.writeText(`{safe_output}`)'
+        style="
+        width:100%;
+        padding:16px;
+        border:none;
+        border-radius:14px;
+        font-size:20px;
+        font-weight:bold;
+        cursor:pointer;
+        background:linear-gradient(90deg,#00f5a0,#00bbff);
+        color:black;
+        margin-top:15px;
+        margin-bottom:10px;
+        box-shadow:0 0 20px rgba(0,255,200,0.45);
+        ">
+        📋 COPY OUTPUT
+        </button>
+        </div>
+        """
 
-st.markdown(copy_button, unsafe_allow_html=True)
+        st.markdown(copy_button, unsafe_allow_html=True)
     # ========================================================
     # SAVE ASSISTANT MESSAGE
     # ========================================================
