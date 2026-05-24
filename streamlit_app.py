@@ -1425,10 +1425,13 @@ if user_query:
     )
 
     # =============================================================================
-# EXECUTION
-# =============================================================================
+# # =============================================================================
 
 if user_query:
+
+    # =========================================================================
+    # USER MESSAGE
+    # =========================================================================
 
     if not is_init:
 
@@ -1453,7 +1456,9 @@ if user_query:
         expanded=True
     ) as status:
 
-        pat_data = pat_eng.scan(user_query)
+        pat_data = pat_eng.scan(
+            user_query
+        )
 
         new_json, comp_use = comp.compile_state(
             user_query,
@@ -1462,10 +1467,12 @@ if user_query:
 
         update_cost(comp_use)
 
-        st.session_state.state_history = st_mach.update(
-            st.session_state.state_history,
-            new_json,
-            pat_data['entropy']
+        st.session_state.state_history = (
+            st_mach.update(
+                st.session_state.state_history,
+                new_json,
+                pat_data['entropy']
+            )
         )
 
         status.update(
@@ -1485,8 +1492,8 @@ if user_query:
         switches,
         st.session_state.state_history[-1],
         pat_data
-    )
-# =============================================================================
+    )    
+    # =============================================================================
 # EXECUTION
 # =============================================================================
 
@@ -1593,14 +1600,35 @@ if user_query:
         st.markdown(out)
 
     # =========================================================================
-    # COPYABLE OUTPUT
+    # REAL COPY BUTTON
     # =========================================================================
 
-    st.caption("📋 COPYABLE OUTPUT")
+    copy_text = json.dumps(out)
 
-    st.code(
-        out,
-        language=None
+    copy_button_html = f"""
+    <div style="margin-top:10px;margin-bottom:20px;">
+
+    <button
+    onclick='navigator.clipboard.writeText({copy_text})'
+    style="
+    background:#00ffb4;
+    color:black;
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:14px;
+    ">
+    📋 COPY OUTPUT
+    </button>
+
+    </div>
+    """
+
+    st.components.v1.html(
+        copy_button_html,
+        height=70
     )
 
     # =========================================================================
