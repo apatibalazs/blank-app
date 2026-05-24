@@ -1,3 +1,9 @@
+# =============================================================================
+# COGNITO ENGINE v3.5.1 × 9.4
+# FULL STREAMLIT APP
+# BLOCK 1 / 2
+# =============================================================================
+
 import streamlit as st
 import time
 import json
@@ -37,26 +43,41 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background: radial-gradient(circle at 50% 0%, #0a1128 0%, #010308 100%);
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            #0a1128 0%,
+            #010308 100%
+        );
 }
 
 h1, h2, h3 {
+
     font-family: 'Orbitron', sans-serif !important;
+
     letter-spacing: 1.5px;
-    text-shadow: 0 0 10px rgba(0,255,180,0.3);
+
+    text-shadow:
+        0 0 10px rgba(0,255,180,0.3);
 }
 
 .stChatMessage,
 .hud-box {
 
-    background: rgba(10, 15, 30, 0.5) !important;
+    background:
+        rgba(10, 15, 30, 0.5) !important;
 
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+    backdrop-filter:
+        blur(12px) !important;
 
-    border: 1px solid rgba(0, 255, 180, 0.25) !important;
+    -webkit-backdrop-filter:
+        blur(12px) !important;
 
-    border-radius: 12px !important;
+    border:
+        1px solid rgba(0, 255, 180, 0.25) !important;
+
+    border-radius:
+        12px !important;
 
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.5),
@@ -65,91 +86,130 @@ h1, h2, h3 {
 
 .collapse-alert {
 
-    background: rgba(255,0,60,0.1);
+    background:
+        rgba(255,0,60,0.1);
 
-    border: 1px solid #ff003c;
+    border:
+        1px solid #ff003c;
 
-    border-radius: 8px;
+    border-radius:
+        8px;
 
-    padding: 15px;
+    padding:
+        15px;
 
-    margin-bottom: 15px;
+    margin-bottom:
+        15px;
 
     box-shadow:
         0 0 20px rgba(255,0,60,0.4),
         inset 0 0 10px rgba(255,0,60,0.1);
 
-    font-family: 'Orbitron', sans-serif;
+    font-family:
+        'Orbitron', sans-serif;
 
-    color: #ff003c;
+    color:
+        #ff003c;
 
-    text-shadow: 0 0 8px #ff003c;
+    text-shadow:
+        0 0 8px #ff003c;
 }
 
 .cost-box {
 
-    background: rgba(255, 170, 0, 0.1);
+    background:
+        rgba(255, 170, 0, 0.1);
 
-    border: 1px solid rgba(255, 170, 0, 0.4);
+    border:
+        1px solid rgba(255, 170, 0, 0.4);
 
-    border-radius: 8px;
+    border-radius:
+        8px;
 
-    padding: 12px;
+    padding:
+        12px;
 
-    text-align: center;
+    text-align:
+        center;
 
-    font-family: 'Orbitron', sans-serif;
+    font-family:
+        'Orbitron', sans-serif;
 
-    color: #ffaa00;
+    color:
+        #ffaa00;
 
-    box-shadow: 0 0 15px rgba(255, 170, 0, 0.2);
+    box-shadow:
+        0 0 15px rgba(255, 170, 0, 0.2);
 }
 
 .copyright {
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    color: #00ffb4;
+    color:
+        #00ffb4;
 
-    text-align: center;
+    text-align:
+        center;
 
-    margin-top: 40px;
+    margin-top:
+        40px;
 
-    padding: 12px;
+    padding:
+        12px;
 
-    border: 1px solid rgba(0, 255, 180, 0.25);
+    border:
+        1px solid rgba(0, 255, 180, 0.25);
 
-    border-radius: 8px;
+    border-radius:
+        8px;
 
-    background: rgba(0, 0, 0, 0.6);
+    background:
+        rgba(0, 0, 0, 0.6);
 
-    box-shadow: 0 0 10px rgba(0,255,180,0.1);
+    box-shadow:
+        0 0 10px rgba(0,255,180,0.1);
 }
 
 .stButton > button {
 
-    background: linear-gradient(90deg, #00ffb4, #00bfff) !important;
+    background:
+        linear-gradient(
+            90deg,
+            #00ffb4,
+            #00bfff
+        ) !important;
 
-    color: #000 !important;
+    color:
+        #000 !important;
 
-    font-weight: bold;
+    font-weight:
+        bold;
 
-    font-family: 'Orbitron', sans-serif;
+    font-family:
+        'Orbitron', sans-serif;
 
-    border: none;
+    border:
+        none;
 
-    border-radius: 8px;
+    border-radius:
+        8px;
 
-    box-shadow: 0 0 15px rgba(0, 255, 180, 0.4) !important;
+    box-shadow:
+        0 0 15px rgba(0, 255, 180, 0.4) !important;
 
-    transition: all 0.3s ease !important;
+    transition:
+        all 0.3s ease !important;
 }
 
 .stButton > button:hover {
 
-    box-shadow: 0 0 25px rgba(0, 255, 180, 0.8) !important;
+    box-shadow:
+        0 0 25px rgba(0, 255, 180, 0.8) !important;
 
-    transform: scale(1.02) !important;
+    transform:
+        scale(1.02) !important;
 }
 
 </style>
@@ -209,14 +269,23 @@ class PatternEngine:
             "káosz"
         ]
 
-        self.inversion_bridges = r'\b(de|azonban|mégis|viszont|ellenben|noha|ugyanakkor)\b'
+        self.inversion_bridges = (
+            r'\b(de|azonban|mégis|viszont|ellenben|noha|ugyanakkor)\b'
+        )
 
     def check_polarity(self, text_chunk):
 
         low = text_chunk.lower()
 
-        has_pos = any(w in low for w in self.pos_markers)
-        has_neg = any(w in low for w in self.neg_markers)
+        has_pos = any(
+            w in low
+            for w in self.pos_markers
+        )
+
+        has_neg = any(
+            w in low
+            for w in self.neg_markers
+        )
 
         if has_pos and not has_neg:
             return 1
@@ -229,13 +298,17 @@ class PatternEngine:
     def scan(self, text):
 
         if not text:
+
             return {
                 "entropy": 0,
                 "patterns": [],
                 "sentences": []
             }
 
-        sentences = re.split(r'(?<=[.!?]) +', text.strip())
+        sentences = re.split(
+            r'(?<=[.!?]) +',
+            text.strip()
+        )
 
         patterns = []
 
@@ -248,13 +321,20 @@ class PatternEngine:
 
         for i, s in enumerate(sentences):
 
-            if re.search(self.inversion_bridges, s.lower()):
+            if re.search(
+                self.inversion_bridges,
+                s.lower()
+            ):
 
-                parts = re.split(self.inversion_bridges, s.lower())
+                parts = re.split(
+                    self.inversion_bridges,
+                    s.lower()
+                )
 
                 if len(parts) >= 3:
 
                     p_l = self.check_polarity(parts[0])
+
                     p_r = self.check_polarity(parts[2])
 
                     if (
@@ -305,9 +385,14 @@ TENSION_KEYS = [
 class MemoryCompiler:
 
     def __init__(self, client):
+
         self.client = client
 
-    def compile_state(self, user_input, pattern_data):
+    def compile_state(
+        self,
+        user_input,
+        pattern_data
+    ):
 
         prompt = f"""
 COGNITO MEMORY COMPILER.
@@ -337,8 +422,13 @@ SÉMA:
         try:
 
             res = self.client.chat.completions.create(
+
                 model="gpt-4o",
-                response_format={"type": "json_object"},
+
+                response_format={
+                    "type": "json_object"
+                },
+
                 messages=[
                     {
                         "role": "system",
@@ -349,15 +439,23 @@ SÉMA:
                         "content": user_input
                     }
                 ],
+
                 temperature=0.1
             )
 
             return (
-                json.loads(res.choices[0].message.content),
+                json.loads(
+                    res.choices[0].message.content
+                ),
                 res.usage
             )
 
-        except:
+        except Exception as e:
+
+            st.error(
+                f"Memory Compiler Error: {e}"
+            )
+
             return None, None
             # =============================================================================
 # STATE MACHINE
@@ -366,6 +464,7 @@ SÉMA:
 class StateMachine:
 
     def __init__(self, decay_rate=0.8):
+
         self.decay_rate = decay_rate
 
     def evaluate_collapse_topology(
@@ -375,7 +474,10 @@ class StateMachine:
     ):
 
         if (
-            tensions.get("ABSTRACTION_VS_REALITY", 0) > 0.75
+            tensions.get(
+                "ABSTRACTION_VS_REALITY",
+                0
+            ) > 0.75
             and
             anchors_count == 0
         ):
@@ -387,9 +489,15 @@ class StateMachine:
             }
 
         if (
-            tensions.get("ORDER_VS_ADAPTATION", 0) > 0.7
+            tensions.get(
+                "ORDER_VS_ADAPTATION",
+                0
+            ) > 0.7
             and
-            tensions.get("EFFICIENCY_VS_STABILITY", 0) > 0.7
+            tensions.get(
+                "EFFICIENCY_VS_STABILITY",
+                0
+            ) > 0.7
         ):
 
             return {
@@ -399,9 +507,15 @@ class StateMachine:
             }
 
         if (
-            tensions.get("POWER_VS_LEGITIMACY", 0) > 0.7
+            tensions.get(
+                "POWER_VS_LEGITIMACY",
+                0
+            ) > 0.7
             and
-            tensions.get("TRANSPARENCY_VS_CONTROL", 0) > 0.7
+            tensions.get(
+                "TRANSPARENCY_VS_CONTROL",
+                0
+            ) > 0.7
         ):
 
             return {
@@ -410,7 +524,11 @@ class StateMachine:
                 "desc": "Kontroll maximalizálása felemészti a legitimitást."
             }
 
-        if sum(tensions.values()) / len(TENSION_KEYS) > 0.55:
+        if (
+            tensions
+            and
+            sum(tensions.values()) / len(TENSION_KEYS) > 0.55
+        ):
 
             return {
                 "status": "WARNING",
@@ -424,20 +542,39 @@ class StateMachine:
             "desc": "A kognitív erőtér kiegyenlített."
         }
 
-    def update(self, history, new_json, raw_entropy):
+    def update(
+        self,
+        history,
+        new_json,
+        raw_entropy
+    ):
 
         if not new_json:
             return history
 
-        tensions = new_json.get("tensions", {})
-        anchors = new_json.get("reality_anchors", [])
+        tensions = new_json.get(
+            "tensions",
+            {}
+        )
+
+        anchors = new_json.get(
+            "reality_anchors",
+            []
+        )
 
         state = {
+
             "tensions": {},
+
             "deltas": {},
+
             "anchors":
-                history[-1].get("anchors", []) + anchors
+                history[-1].get(
+                    "anchors",
+                    []
+                ) + anchors
                 if history else anchors,
+
             "entropy": raw_entropy
         }
 
@@ -453,16 +590,21 @@ class StateMachine:
                 old_val * self.decay_rate
             )
 
-            state["tensions"][k] = round(new_val, 2)
+            state["tensions"][k] = round(
+                new_val,
+                2
+            )
 
             state["deltas"][k] = round(
                 new_val - old_val,
                 2
             )
 
-        state["topology"] = self.evaluate_collapse_topology(
-            state["tensions"],
-            len(anchors)
+        state["topology"] = (
+            self.evaluate_collapse_topology(
+                state["tensions"],
+                len(anchors)
+            )
         )
 
         history.append(state)
@@ -492,30 +634,119 @@ class WritingEngine:
             for k, v in switches.items()
         ])
 
+        tensions_json = json.dumps(
+            cur_state.get("tensions", {}),
+            ensure_ascii=False,
+            indent=2
+        )
+
+        patterns_json = json.dumps(
+            pat.get("patterns", []),
+            ensure_ascii=False,
+            indent=2
+        )
+
         return f"""
 COGNITO ENGINE 3.5.1 PRO × 9.4
+OMNI RUNTIME SYSTEM
+
+[ACTIVE PROFILE]
 
 STATE: {state}
 MODE: {mode}
 WEB: {web}
 OUTPUT FORMAT: {out_fmt}
 
-SWITCHES:
+[SWITCHES]
+
 {sw_txt}
 
-HUD CONTEXT:
-Entropy {pat.get('entropy')}
+[HUD CONTEXT]
 
-Topology:
+ENTROPY:
+{pat.get('entropy')}
+
+TOPOLOGY:
 {cur_state.get('topology', {}).get('type')}
 
-Kognitív adatok:
-{json.dumps(cur_state.get('tensions', {}), ensure_ascii=False)}
+TOPOLOGY DESCRIPTION:
+{cur_state.get('topology', {}).get('desc')}
 
-MINDEN UTASÍTÁST MAGYARUL HAJTS VÉGRE.
-Használd a HUD és a kognitív adatok szerinti tónust.
+[TENSION FIELD]
+
+{tensions_json}
+
+[STRUCTURAL INVERSIONS]
+
+{patterns_json}
+
+====================================================================
+
+CORE DIRECTIVES
+
+- Ne legyél chatbot.
+- Ne legyél asszisztens.
+- Ne írj általános AI-szöveget.
+- Kerüld a steril összefoglalást.
+- Kerüld a LinkedIn-ritmust.
+- Kerüld az üres publicisztikai paneleket.
+- Kerüld az általános filozófiai ködöt.
+
+====================================================================
+
+OPERATING RULES
+
+1. Minden állítás legyen konkrét.
+
+2. Minden absztrakció után jöjjön konkrét példa.
+
+3. Minden konfliktusnak legyen emberi ára.
+
+4. A rendszer nevezze meg:
+   - ki veszít,
+   - hogyan veszít,
+   - milyen mechanizmus miatt.
+
+5. Ne simítsd el az ellentmondásokat.
+
+6. Ne zárd le túl gyorsan a gondolatot.
+
+7. Kerüld az AI-szagú átvezetéseket.
+
+====================================================================
+
+WRITING STYLE
+
+- Sűrű.
+- Analitikus.
+- Kíméletlenül konkrét.
+- Ritmusában enyhén aszimmetrikus.
+- Kerülje a túl steril folyékonyságot.
+
+====================================================================
+
+OUTPUT STRUCTURE
+
+RUN STATUS:
+FRAME:
+PARADOX:
+MODEL SET:
+INTERFERENCE:
+REALITY COLLISION:
+DECISION:
+ELIMINATED PATHS:
+LOSS:
+CONSEQUENCE:
+NEXT MOVE:
 
 WRITING OUTPUT:
+(Ez legyen a valódi végső szöveg.)
+
+RESIDUAL TENSION:
+
+====================================================================
+
+MINDEN UTASÍTÁST MAGYARUL HAJTS VÉGRE.
 """
 
 
@@ -524,17 +755,24 @@ WRITING OUTPUT:
 # =============================================================================
 
 for key in [
+
     "state_history",
+
     "chat_messages",
+
     "last_audio",
+
     "total_in_tokens",
+
     "total_out_tokens",
+
     "total_usd"
 ]:
 
     if key not in st.session_state:
 
         st.session_state[key] = (
+
             []
             if "messages" in key or "history" in key
             else (
@@ -551,7 +789,9 @@ for key in [
 
 with st.sidebar:
 
-    st.markdown("### ⚙️ INIT MODULE 9.4")
+    st.markdown(
+        "### ⚙️ INIT MODULE 9.4"
+    )
 
     run_state = help_selectbox(
         "STATE",
@@ -604,14 +844,18 @@ with st.sidebar:
         key="output"
     )
 
-    st.markdown("### 🎛️ GLOBAL SWITCHES")
+    st.markdown(
+        "### 🎛️ GLOBAL SWITCHES"
+    )
 
     switches = {
+
         k: help_toggle(
             k,
             value=True,
             key=f"toggle_{k}"
         )
+
         for k in [
             "ENGINE_MODE",
             "OPEN_SYSTEM",
@@ -624,17 +868,31 @@ with st.sidebar:
 
     st.divider()
 
-    st.markdown("### 💸 RUNTIME COST")
+    st.markdown(
+        "### 💸 RUNTIME COST"
+    )
 
     st.markdown(
         f"""
 <div class='cost-box'>
-TOTAL: <b>${st.session_state.total_usd:.4f}</b><br>
+
+TOTAL:
+<b>${st.session_state.total_usd:.4f}</b>
+
+<br>
+
 <span style='font-size:10px;color:#ccc;'>
-IN: {st.session_state.total_in_tokens}
+
+IN:
+{st.session_state.total_in_tokens}
+
 |
-OUT: {st.session_state.total_out_tokens}
+
+OUT:
+{st.session_state.total_out_tokens}
+
 </span>
+
 </div>
 """,
         unsafe_allow_html=True
@@ -643,7 +901,9 @@ OUT: {st.session_state.total_out_tokens}
     if st.button("🗑️ PURGE MEMORY"):
 
         st.session_state.state_history = []
+
         st.session_state.chat_messages = []
+
         st.session_state.total_usd = 0.0
 
         st.rerun()
@@ -651,11 +911,21 @@ OUT: {st.session_state.total_out_tokens}
     st.markdown(
         """
 <div class='copyright'>
-Concept & Design:<br>
-<b>Apáti Balázs / CSAPATI</b><br>
+
+Concept & Design:
+
+<br>
+
+<b>Apáti Balázs / CSAPATI</b>
+
+<br>
+
 <span style='color:white;'>
+
 COGNITO ENGINE v3.5.1 PRO × 9.4
+
 </span>
+
 </div>
 """,
         unsafe_allow_html=True
@@ -692,6 +962,7 @@ except:
 if "OPENAI_API_KEY" not in st.secrets:
 
     st.error("API KEY MISSING!")
+
     st.stop()
 
 client = OpenAI(
@@ -699,187 +970,7 @@ client = OpenAI(
 )
 
 pat_eng = PatternEngine()
+
 comp = MemoryCompiler(client)
+
 st_mach = StateMachine()
-
-
-# =============================================================================
-# HUD
-# =============================================================================
-
-if st.session_state.state_history:
-
-    st.markdown(
-        "### 📡 COGNITIVE HUD",
-        unsafe_allow_html=True
-    )
-
-    cur = st.session_state.state_history[-1]
-
-    if cur['topology']['status'] == "CRITICAL":
-
-        st.markdown(
-            f"""
-<div class='collapse-alert'>
-⚠️ <b>TOPOLOGICAL COLLAPSE:</b>
-{cur['topology']['type']}
-<br>
-{cur['topology']['desc']}
-</div>
-""",
-            unsafe_allow_html=True
-        )
-
-    c1, c2 = st.columns([2.5, 1])
-
-    with c1:
-
-        with st.expander(
-            "VECTOR FIELD (7D GRAVITY)",
-            expanded=True
-        ):
-
-            for k in TENSION_KEYS:
-
-                color = (
-                    "🔵"
-                    if cur['tensions'][k] > 0.7
-                    else "⚪"
-                )
-
-                st.write(
-                    f"{color} **{k}:** {cur['tensions'][k]:.2f}"
-                )
-
-    with c2:
-
-        st.metric(
-            "ENTROPY",
-            f"{cur['entropy']:.2f}"
-        )
-
-
-# =============================================================================
-# INPUT
-# =============================================================================
-
-user_query = None
-is_init = False
-
-if not st.session_state.chat_messages:
-
-    topic_input = st.text_area(
-        "RENDSZER-INPUT (Nyers adat a kognitív reaktorba)",
-        height=150
-    )
-
-    if (
-        st.button("⚡ EXECUTE COGNITIVE PIPELINE")
-        and topic_input
-    ):
-
-        user_query = topic_input
-        is_init = True
-
-else:
-
-    for msg in st.session_state.chat_messages:
-
-        with st.chat_message(
-            msg["role"],
-            avatar="⬛" if msg["role"] == "assistant" else "👤"
-        ):
-
-            st.markdown(msg["content"])
-
-    user_query = st.chat_input(
-        "Új input a futó rendszernek..."
-    )
-
-
-# =============================================================================
-# EXECUTION
-# =============================================================================
-
-if user_query:
-
-    if not is_init:
-
-        st.session_state.chat_messages.append({
-            "role": "user",
-            "content": user_query
-        })
-
-        with st.chat_message(
-            "user",
-            avatar="👤"
-        ):
-
-            st.markdown(user_query)
-
-    with st.status(
-        "⚙️ Kognitív Reaktor Fut...",
-        expanded=True
-    ) as status:
-
-        pat_data = pat_eng.scan(user_query)
-
-        new_json, comp_use = comp.compile_state(
-            user_query,
-            pat_data
-        )
-
-        update_cost(comp_use)
-
-        st.session_state.state_history = st_mach.update(
-            st.session_state.state_history,
-            new_json,
-            pat_data['entropy']
-        )
-
-        status.update(
-            label="✅ OMNI Dekódolás kész.",
-            state="complete"
-        )
-
-    prompt = WritingEngine.generate_prompt(
-        run_state,
-        run_mode,
-        web_mode,
-        out_format,
-        switches,
-        st.session_state.state_history[-1],
-        pat_data
-    )
-
-    with st.chat_message(
-        "assistant",
-        avatar="⬛"
-    ):
-
-        resp = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "system",
-                    "content": prompt
-                },
-                {
-                    "role": "user",
-                    "content": user_query
-                }
-            ]
-        )
-
-        out = resp.choices[0].message.content
-
-        update_cost(resp.usage)
-
-        st.markdown(out)
-
-        st.session_state.chat_messages.append({
-            "role": "assistant",
-            "content": out
-        })
-
-    st.rerun()
