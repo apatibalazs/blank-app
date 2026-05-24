@@ -1336,7 +1336,8 @@ if audio is not None:
         st.rerun()
 
 
-user_query = st.session_state.input_text.strip()
+user_query = st.session_state.input_text.strip() 
+
 # ============================================================
 # EXECUTION BUTTON
 # ============================================================
@@ -1351,80 +1352,79 @@ execute_clicked = st.button(
 # EXECUTION ENGINE
 # ============================================================
 
-if execute_clicked and user_query:
+if execute_clicked:
 
-    # ========================================================
-    # STORE USER MESSAGE
-    # ========================================================
+    if st.session_state.input_text.strip():
 
-    st.session_state.chat_messages.append({
-        "role": "user",
-        "content": user_query
-    })
+        user_query = st.session_state.input_text
 
-    with st.chat_message(
-        "user",
-        avatar="👤"
-    ):
-        st.markdown(user_query)
+        # ============================================================
+        # STORE USER MESSAGE
+        # ============================================================
 
-    # ========================================================
-    # COGNITIVE STATUS
-    # ========================================================
+        st.session_state.chat_messages.append({
+            "role": "user",
+            "content": user_query
+        })
 
-    with st.status(
-        "⚙️ Kognitív Reaktor Fut...",
-        expanded=True
-    ) as status:
+        with st.chat_message(
+            "user",
+            avatar="👤"
+        ):
+            st.markdown(user_query)
 
-        pat_data = pat_eng.scan(
-            user_query
-        )
+        # ============================================================
+        # COGNITIVE STATUS
+        # ============================================================
 
-        new_json, comp_use = comp.compile_state(
-            user_query,
+        with st.status(
+            "⚙️ Kognitív Reaktor Fut...",
+            expanded=True
+        ) as status:
+
+            pat_data = pat_eng.scan(
+                user_query
+            )
+
+            new_json, comp_use = comp.compile_state(
+                user_query,
+                pat_data
+            )
+
+            update_cost(comp_use)
+
+            st.session_state.state_history = (
+                st_mach.update(
+                    st.session_state.state_history,
+                    new_json,
+                    pat_data["entropy"]
+                )
+            )
+
+            status.update(
+                label="✅ OMNI Dekódolás kész.",
+                state="complete"
+            )
+
+        # ============================================================
+        # PROMPT BUILD
+        # ============================================================
+
+        prompt = WritingEngine.generate_prompt(
+            run_state,
+            run_mode,
+            web_mode,
+            out_format,
+            switches,
+            st.session_state.state_history[-1],
             pat_data
         )
 
-        update_cost(comp_use)
+        # ============================================================
+        # MODEL EXECUTION
+        # ============================================================
 
-        st.session_state.state_history = (
-            st_mach.update(
-                st.session_state.state_history,
-                new_json,
-                pat_data["entropy"]
-            )
-        )
-
-        status.update(
-            label="✅ OMNI Dekódolás kész.",
-            state="complete"
-        )
-
-    # ========================================================
-    # PROMPT BUILD
-    # ========================================================
-
-    prompt = WritingEngine.generate_prompt(
-        run_state,
-        run_mode,
-        web_mode,
-        out_format,
-        switches,
-        st.session_state.state_history[-1],
-        pat_data
-    )
-
-    # ========================================================
-    # MODEL EXECUTION
-    # ========================================================
-
-    with st.chat_message(
-        "assistant",
-        avatar="◼️"
-    ):
-
-        resp = client.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {
@@ -1438,66 +1438,103 @@ if execute_clicked and user_query:
             ]
         )
 
-        out = resp.choices[0].message.content
+        out = response.choices[0].message.content
 
-        update_cost(resp.usage)
+        update_cost(response.usage)
 
-        st.markdown(out)
+        # ============================================================
+        # ASSISTANT OUTPUT
+        # ============================================================
 
-        # ====================================================
-        # COPY OUTPUT BUTTON
-        # ====================================================
+        with st.chat_message(
+            "assistant",
+            avatar="◼️"
+        ):
 
-        safe_output = (
-            out
-            .replace("\\", "\\\\")
-            .replace("`", "\\`")
-            .replace("$", "\\$")
-        )
+            st.markdown(out)
 
-        copy_button = f"""
-        <div style="margin-top:20px;">
-        <button
-        onclick='navigator.clipboard.writeText(`{safe_output}`)'
-        style="
-        width:100%;
-        padding:16px;
-        border:none;
-        border-radius:14px;
-        font-size:20px;
-        font-weight:bold;
-        cursor:pointer;
-        background:linear-gradient(90deg,#00f5a0,#00bbff);
-        color:black;
-        margin-top:15px;
-        margin-bottom:10px;
-        box-shadow:0 0 20px rgba(0,255,200,0.45);
-        ">
-        📋 COPY OUTPUT
-        </button>
-        </div>
-        """
+            # ============================================================
+            # COPY BUTTON
+            # ============================================================
 
-        st.markdown(copy_button, unsafe_allow_html=True)
-    # ========================================================
-    # SAVE ASSISTANT MESSAGE
-    # ========================================================
+            safe_output = (
+                out
+                .replace("\\", "\\\\")
+                .replace("`", "\\`")
+                .replace("$", "\\$")
+            )
 
-    st.session_state.chat_messages.append({
-        "role": "assistant",
-        "content": out
-    })
+            copy_html = f"""
+            <div style="margin-top:20px;">
+                <button
+                    onclick="navigator.clipboard.writeText(`{safe_output}`)"
+                    style="
+                        width:100%;
+                        padding:16px;
+                        border:none;
+                        border-radius:14px;
+                        font-size:20px;
+                        font-weight:bold;
+                        cursor:pointer;
+                        background:linear-gradient(90deg,#00f5a0,#00bbff);
+                        color:black;
+                        margin-top:15px;
+                        margin-bottom:10px;
+                        box-shadow:0 0 20px rgba(0,255,200,0.45);
+                    ">
+                    📋 COPY OUTPUT
+                </button>
+            </div>
+            """
 
-    # ========================================================
-    # CLEAR INPUT
-    # ========================================================
+            st.components.v1.html(
+                copy_html,
+                height=90
+            )
 
-    st.session_state.input_text = ""
+        # ============================================================
+        # SAVE ASSISTANT MESSAGE
+        # ============================================================
 
+        st.session_state.chat_messages.append({
+            "role": "assistant",
+            "content": out
+        })
+
+        # ============================================================
+        # CLEAR INPUT
+        # ============================================================
+
+        st.session_state.input_text = ""
 
 # ============================================================
-# END OF RUNTIME
+# CHAT HISTORY RENDER
+# ============================================================
+
+for msg in st.session_state.chat_messages:
+
+    if msg["role"] == "user":
+
+        with st.chat_message(
+            "user",
+            avatar="👤"
+        ):
+            st.markdown(msg["content"])
+
+    else:
+
+        with st.chat_message(
+            "assistant",
+            avatar="◼️"
+        ):
+            st.markdown(msg["content"])
+
+# ============================================================
+# FOOTER
 # ============================================================
 
 st.markdown("---")
-st.caption("COGNITO ENGINE — Multimodal Cognitive Runtime")
+
+st.caption(
+    "COGNITO ENGINE — Multimodal Cognitive Runtime"
+)
