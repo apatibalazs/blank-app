@@ -36,7 +36,7 @@ class PatternEngine:
 class MemoryCompiler:
     def __init__(self, client): self.client = client
     def compile_state(self, user_input, pattern_data):
-        json_schema = '{"tensions": {"TENGELY_NEVE": "float(0-1)"}, "reality_anchors": [{"entity": "string", "fact": "string"}]}'
+        json_schema = '{"tensions": {"POWER_VS_LEGITIMACY": 0.0, "ORDER_VS_ADAPTATION": 0.0, "CENTRALIZATION_VS_RESILIENCE": 0.0, "ABSTRACTION_VS_REALITY": 0.0, "EFFICIENCY_VS_STABILITY": 0.0, "IDENTITY_VS_INTEGRATION": 0.0, "TRANSPARENCY_VS_CONTROL": 0.0}, "reality_anchors": []}'
         prompt = f"COGNITO MEMORY COMPILER. 7D vektor JSON-t írj. Inverziók: {json.dumps(pattern_data['patterns'])}. SÉMA: {json_schema}"
         try:
             res = self.client.chat.completions.create(model="gpt-4o", response_format={"type": "json_object"}, messages=[{"role": "system", "content": prompt}, {"role": "user", "content": user_input}], temperature=0.1)
@@ -64,8 +64,7 @@ class StateMachine:
         state["topology"] = self.evaluate_collapse_topology(state["tensions"], len(anchors))
         history.append(state)
         return history
-
-class WritingEngine:
+        class WritingEngine:
     @staticmethod
     def generate_prompt(state, mode, web, out_fmt, switches, cur_state, pat):
         sw_txt = "\n".join([f"{k}={v}" for k, v in switches.items()])
@@ -96,6 +95,7 @@ with st.sidebar:
     run_mode = st.selectbox("MODE", ["QUICK", "BALANCED", "DEEP", "CREATIVE", "SCIENTIFIC"], index=2)
     web_mode = st.radio("WEB", ["OFF", "AUTO", "ON"], index=1)
     out_format = st.radio("OUTPUT FORMAT", ["POLITICAL PAMPHLET", "STRATEGIC MEMO", "PRODUCT DESCRIPTION", "FULL TEXT"], index=3)
+    audio_val = st.audio_input("🎤 HANG INPUT")
     switches = {k: st.toggle(k, value=True) for k in ["ENGINE_MODE", "OPEN_SYSTEM", "DECISION_MODE", "VALIDATION_MODE", "ANTI_CLOSURE", "LOSS_TRACKING"]}
     st.divider()
     st.markdown(f"TOTAL: ${st.session_state.total_usd:.4f} | IN: {st.session_state.total_in_tokens} | OUT: {st.session_state.total_out_tokens}")
@@ -127,4 +127,4 @@ if "OPENAI_API_KEY" in st.secrets:
             except Exception as e:
                 st.error(f"REACTOR FAILURE: {e}")
             st.rerun()
-    
+        
