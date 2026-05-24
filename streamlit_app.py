@@ -1358,24 +1358,14 @@ if execute_clicked:
 
         user_query = st.session_state.input_text
 
-        # ============================================================
-        # STORE USER MESSAGE
-        # ============================================================
+        # SAVE USER MESSAGE
 
         st.session_state.chat_messages.append({
             "role": "user",
             "content": user_query
         })
 
-        with st.chat_message(
-            "user",
-            avatar="👤"
-        ):
-            st.markdown(user_query)
-
-        # ============================================================
         # COGNITIVE STATUS
-        # ============================================================
 
         with st.status(
             "⚙️ Kognitív Reaktor Fut...",
@@ -1406,9 +1396,7 @@ if execute_clicked:
                 state="complete"
             )
 
-        # ============================================================
         # PROMPT BUILD
-        # ============================================================
 
         prompt = WritingEngine.generate_prompt(
             run_state,
@@ -1420,9 +1408,7 @@ if execute_clicked:
             pat_data
         )
 
-        # ============================================================
         # MODEL EXECUTION
-        # ============================================================
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -1442,68 +1428,14 @@ if execute_clicked:
 
         update_cost(response.usage)
 
-        # ============================================================
-        # ASSISTANT OUTPUT
-        # ============================================================
-
-        with st.chat_message(
-            "assistant",
-            avatar="◼️"
-        ):
-
-            st.markdown(out)
-
-            # ============================================================
-            # COPY BUTTON
-            # ============================================================
-
-            safe_output = (
-                out
-                .replace("\\", "\\\\")
-                .replace("`", "\\`")
-                .replace("$", "\\$")
-            )
-
-            copy_html = f"""
-            <div style="margin-top:20px;">
-                <button
-                    onclick="navigator.clipboard.writeText(`{safe_output}`)"
-                    style="
-                        width:100%;
-                        padding:16px;
-                        border:none;
-                        border-radius:14px;
-                        font-size:20px;
-                        font-weight:bold;
-                        cursor:pointer;
-                        background:linear-gradient(90deg,#00f5a0,#00bbff);
-                        color:black;
-                        margin-top:15px;
-                        margin-bottom:10px;
-                        box-shadow:0 0 20px rgba(0,255,200,0.45);
-                    ">
-                    📋 COPY OUTPUT
-                </button>
-            </div>
-            """
-
-            st.components.v1.html(
-                copy_html,
-                height=90
-            )
-
-        # ============================================================
         # SAVE ASSISTANT MESSAGE
-        # ============================================================
 
         st.session_state.chat_messages.append({
             "role": "assistant",
             "content": out
         })
 
-        # ============================================================
         # CLEAR INPUT
-        # ============================================================
 
         st.session_state.input_text = ""
 
@@ -1532,9 +1464,7 @@ for msg in st.session_state.chat_messages:
 
             st.markdown(msg["content"])
 
-            # ============================================================
             # COPY BUTTON
-            # ============================================================
 
             safe_output = (
                 msg["content"]
