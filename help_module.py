@@ -15,6 +15,7 @@ def get_help_text(key):
 def show_help(key):
     data = get_help_text(key)
     if data:
+        # Ez a blokk garantáltan megjelenik az oldalsávban
         st.sidebar.markdown("---")
         st.sidebar.markdown(f"### ⓘ {data['title']}")
         st.sidebar.markdown(f"**Mire való:** {data['summary']}")
