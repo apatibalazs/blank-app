@@ -974,3 +974,183 @@ pat_eng = PatternEngine()
 comp = MemoryCompiler(client)
 
 st_mach = StateMachine()
+# =============================================================================
+# HUD
+# =============================================================================
+
+if st.session_state.state_history:
+
+    st.markdown(
+        "### 📡 COGNITIVE HUD",
+        unsafe_allow_html=True
+    )
+
+    cur = st.session_state.state_history[-1]
+
+    if cur['topology']['status'] == "CRITICAL":
+
+        st.markdown(
+            f"""
+<div class='collapse-alert'>
+⚠️ <b>TOPOLOGICAL COLLAPSE:</b>
+{cur['topology']['type']}
+<br>
+{cur['topology']['desc']}
+</div>
+""",
+            unsafe_allow_html=True
+        )
+
+    c1, c2 = st.columns([2.5, 1])
+
+    with c1:
+
+        with st.expander(
+            "VECTOR FIELD (7D GRAVITY)",
+            expanded=True
+        ):
+
+            for k in TENSION_KEYS:
+
+                color = (
+                    "🔵"
+                    if cur['tensions'][k] > 0.7
+                    else "⚪"
+                )
+
+                st.write(
+                    f"{color} **{k}:** {cur['tensions'][k]:.2f}"
+                )
+
+    with c2:
+
+        st.metric(
+            "ENTROPY",
+            f"{cur['entropy']:.2f}"
+        )
+
+
+# =============================================================================
+# INPUT
+# =============================================================================
+
+user_query = None
+is_init = False
+
+if not st.session_state.chat_messages:
+
+    topic_input = st.text_area(
+        "RENDSZER-INPUT (Nyers adat a kognitív reaktorba)",
+        height=180
+    )
+
+    if (
+        st.button("⚡ EXECUTE COGNITIVE PIPELINE")
+        and topic_input
+    ):
+
+        user_query = topic_input
+        is_init = True
+
+else:
+
+    for msg in st.session_state.chat_messages:
+
+        with st.chat_message(
+            msg["role"],
+            avatar="⬛" if msg["role"] == "assistant" else "👤"
+        ):
+
+            st.markdown(msg["content"])
+
+    user_query = st.chat_input(
+        "Új input a futó rendszernek..."
+    )
+
+
+# =============================================================================
+# EXECUTION
+# =============================================================================
+
+if user_query:
+
+    if not is_init:
+
+        st.session_state.chat_messages.append({
+            "role": "user",
+            "content": user_query
+        })
+
+        with st.chat_message(
+            "user",
+            avatar="👤"
+        ):
+
+            st.markdown(user_query)
+
+    with st.status(
+        "⚙️ Kognitív Reaktor Fut...",
+        expanded=True
+    ) as status:
+
+        pat_data = pat_eng.scan(user_query)
+
+        new_json, comp_use = comp.compile_state(
+            user_query,
+            pat_data
+        )
+
+        update_cost(comp_use)
+
+        st.session_state.state_history = st_mach.update(
+            st.session_state.state_history,
+            new_json,
+            pat_data['entropy']
+        )
+
+        status.update(
+            label="✅ OMNI Dekódolás kész.",
+            state="complete"
+        )
+
+    prompt = WritingEngine.generate_prompt(
+        run_state,
+        run_mode,
+        web_mode,
+        out_format,
+        switches,
+        st.session_state.state_history[-1],
+        pat_data
+    )
+
+    with st.chat_message(
+        "assistant",
+        avatar="⬛"
+    ):
+
+        resp = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": user_query
+                }
+            ]
+        )
+
+        out = resp.choices[0].message.content
+
+        update_cost(resp.usage)
+
+        st.markdown(out)
+
+        st.session_state.chat_messages.append({
+            "role": "assistant",
+            "content": out
+        })
+
+    st.rerun()
