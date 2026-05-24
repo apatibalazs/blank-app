@@ -1564,6 +1564,77 @@ if user_query:
         pat_data
     )
 
+    # =============================================================================
+# EXECUTION
+# =============================================================================
+
+if user_query:
+
+    # =========================================================================
+    # USER MESSAGE
+    # =========================================================================
+
+    if not is_init:
+
+        st.session_state.chat_messages.append({
+            "role": "user",
+            "content": user_query
+        })
+
+        with st.chat_message(
+            "user",
+            avatar="👤"
+        ):
+
+            st.markdown(user_query)
+
+    # =========================================================================
+    # COGNITIVE STATUS
+    # =========================================================================
+
+    with st.status(
+        "⚙️ Kognitív Reaktor Fut...",
+        expanded=True
+    ) as status:
+
+        pat_data = pat_eng.scan(
+            user_query
+        )
+
+        new_json, comp_use = comp.compile_state(
+            user_query,
+            pat_data
+        )
+
+        update_cost(comp_use)
+
+        st.session_state.state_history = (
+            st_mach.update(
+                st.session_state.state_history,
+                new_json,
+                pat_data['entropy']
+            )
+        )
+
+        status.update(
+            label="✅ OMNI Dekódolás kész.",
+            state="complete"
+        )
+
+    # =========================================================================
+    # PROMPT BUILD
+    # =========================================================================
+
+    prompt = WritingEngine.generate_prompt(
+        run_state,
+        run_mode,
+        web_mode,
+        out_format,
+        switches,
+        st.session_state.state_history[-1],
+        pat_data
+    )
+    #
     # =========================================================================
     # MODEL EXECUTION
     # =========================================================================
@@ -1608,27 +1679,28 @@ if user_query:
     copy_button_html = f"""
     <div style="margin-top:10px;margin-bottom:20px;">
 
-    <button
-    onclick='navigator.clipboard.writeText({copy_text})'
-    style="
-    background:#00ffb4;
-    color:black;
-    border:none;
-    padding:10px 18px;
-    border-radius:8px;
-    font-weight:bold;
-    cursor:pointer;
-    font-size:14px;
-    ">
-    📋 COPY OUTPUT
-    </button>
+        <button
+        onclick='navigator.clipboard.writeText({copy_text})'
+        style="
+            background:#00ffb4;
+            color:black;
+            border:none;
+            padding:12px 20px;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;
+            font-size:15px;
+            width:100%;
+        ">
+            📋 COPY OUTPUT
+        </button>
 
     </div>
     """
 
     st.components.v1.html(
         copy_button_html,
-        height=70
+        height=80
     )
 
     # =========================================================================
@@ -1644,6 +1716,8 @@ if user_query:
     # SAFE RESET
     # =========================================================================
 
+    user_query = None
+
     st.session_state.input_text = ""
 
     st.session_state.last_audio_id = None
@@ -1655,5 +1729,3 @@ if user_query:
     st.session_state.pending_file_text = None
 
     st.session_state.clear_input_next_run = True
-
-    st.rerun()
