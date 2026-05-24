@@ -359,9 +359,7 @@ SÉMA:
 
         except:
             return None, None
-
-
-# =============================================================================
+            # =============================================================================
 # STATE MACHINE
 # =============================================================================
 
@@ -473,7 +471,7 @@ class StateMachine:
 
 
 # =============================================================================
-# WRITING ENGINE (JAVÍTVA: ADAT-INJEKTÁLÁS)
+# WRITING ENGINE
 # =============================================================================
 
 class WritingEngine:
@@ -512,13 +510,15 @@ Topology:
 {cur_state.get('topology', {}).get('type')}
 
 Kognitív adatok:
-{json.dumps(cur_state.get('tensions', {}))}
+{json.dumps(cur_state.get('tensions', {}), ensure_ascii=False)}
 
 MINDEN UTASÍTÁST MAGYARUL HAJTS VÉGRE.
 Használd a HUD és a kognitív adatok szerinti tónust.
 
 WRITING OUTPUT:
-""”
+"""
+
+
 # =============================================================================
 # SESSION STATE
 # =============================================================================
@@ -555,28 +555,51 @@ with st.sidebar:
 
     run_state = help_selectbox(
         "STATE",
-        ["FOG", "SPARK", "CUT", "PRESSURE", "COLLISION", "BREAK", "ALCHEMY"],
+        [
+            "FOG",
+            "SPARK",
+            "CUT",
+            "PRESSURE",
+            "COLLISION",
+            "BREAK",
+            "ALCHEMY"
+        ],
         index=5,
         key="state"
     )
 
     run_mode = help_selectbox(
         "MODE",
-        ["QUICK", "BALANCED", "DEEP", "CREATIVE", "SCIENTIFIC"],
+        [
+            "QUICK",
+            "BALANCED",
+            "DEEP",
+            "CREATIVE",
+            "SCIENTIFIC"
+        ],
         index=2,
         key="mode"
     )
 
     web_mode = help_selectbox(
         "WEB",
-        ["OFF", "AUTO", "ON"],
+        [
+            "OFF",
+            "AUTO",
+            "ON"
+        ],
         index=1,
         key="web"
     )
 
     out_format = help_selectbox(
         "OUTPUT FORMAT",
-        ["POLITICAL PAMPHLET", "STRATEGIC MEMO", "PRODUCT DESCRIPTION", "FULL TEXT"],
+        [
+            "POLITICAL PAMPHLET",
+            "STRATEGIC MEMO",
+            "PRODUCT DESCRIPTION",
+            "FULL TEXT"
+        ],
         index=3,
         key="output"
     )
@@ -584,113 +607,279 @@ with st.sidebar:
     st.markdown("### 🎛️ GLOBAL SWITCHES")
 
     switches = {
-        k: help_toggle(k, value=True, key=f"toggle_{k}")
-        for k in ["ENGINE_MODE", "OPEN_SYSTEM", "DECISION_MODE", "VALIDATION_MODE", "ANTI_CLOSURE", "LOSS_TRACKING"]
+        k: help_toggle(
+            k,
+            value=True,
+            key=f"toggle_{k}"
+        )
+        for k in [
+            "ENGINE_MODE",
+            "OPEN_SYSTEM",
+            "DECISION_MODE",
+            "VALIDATION_MODE",
+            "ANTI_CLOSURE",
+            "LOSS_TRACKING"
+        ]
     }
 
     st.divider()
 
     st.markdown("### 💸 RUNTIME COST")
-st.markdown(
-    f"""
-    <div class='cost-box'>
-        TOTAL:
-        <b>${st.session_state.total_usd:.4f}</b>
-        <br>
-        <span style='font-size:10px;color:#ccc;'>
-            IN: {st.session_state.total_in_tokens}
-            |
-            OUT: {st.session_state.total_out_tokens}
-        </span>
-    </div>
-    """,
-    unsafe_allow_html=True
-)    <span style='font-size:10px;color:#ccc;'>IN: {st.session_state.total_in_tokens} | OUT: {st.session_state.total_out_tokens}</span></div>""", unsafe_allow_html=True)
+
+    st.markdown(
+        f"""
+<div class='cost-box'>
+TOTAL: <b>${st.session_state.total_usd:.4f}</b><br>
+<span style='font-size:10px;color:#ccc;'>
+IN: {st.session_state.total_in_tokens}
+|
+OUT: {st.session_state.total_out_tokens}
+</span>
+</div>
+""",
+        unsafe_allow_html=True
+    )
 
     if st.button("🗑️ PURGE MEMORY"):
+
         st.session_state.state_history = []
         st.session_state.chat_messages = []
         st.session_state.total_usd = 0.0
+
         st.rerun()
 
-    st.markdown("""<div class='copyright'>Concept & Design:<br><b>Apáti Balázs / CSAPATI</b><br><span style='color:white;'>COGNITO ENGINE v3.5.1 PRO × 9.4</span></div>""", unsafe_allow_html=True)
+    st.markdown(
+        """
+<div class='copyright'>
+Concept & Design:<br>
+<b>Apáti Balázs / CSAPATI</b><br>
+<span style='color:white;'>
+COGNITO ENGINE v3.5.1 PRO × 9.4
+</span>
+</div>
+""",
+        unsafe_allow_html=True
+    )
 
 
 # =============================================================================
 # LOGO & OPENAI
 # =============================================================================
 
-try: st.image("logo.png", use_container_width=True)
-except: 
-    try: st.image("logo.jpg", use_container_width=True)
-    except: st.markdown("<h1 style='text-align:center;'>⬛ COGNITO ENGINE PRO</h1>", unsafe_allow_html=True)
+try:
 
-if "OPENAI_API_KEY" not in st.secrets: st.error("API KEY MISSING!"); st.stop()
+    st.image(
+        "logo.png",
+        use_container_width=True
+    )
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+except:
+
+    try:
+
+        st.image(
+            "logo.jpg",
+            use_container_width=True
+        )
+
+    except:
+
+        st.markdown(
+            "<h1 style='text-align:center;'>⬛ COGNITO ENGINE PRO</h1>",
+            unsafe_allow_html=True
+        )
+
+if "OPENAI_API_KEY" not in st.secrets:
+
+    st.error("API KEY MISSING!")
+    st.stop()
+
+client = OpenAI(
+    api_key=st.secrets["OPENAI_API_KEY"]
+)
+
 pat_eng = PatternEngine()
 comp = MemoryCompiler(client)
 st_mach = StateMachine()
 
 
 # =============================================================================
-# HUD & INPUT
+# HUD
 # =============================================================================
 
 if st.session_state.state_history:
-    st.markdown("### 📡 COGNITIVE HUD", unsafe_allow_html=True)
+
+    st.markdown(
+        "### 📡 COGNITIVE HUD",
+        unsafe_allow_html=True
+    )
+
     cur = st.session_state.state_history[-1]
+
     if cur['topology']['status'] == "CRITICAL":
-        st.markdown(f"<div class='collapse-alert'>⚠️ <b>TOPOLOGICAL COLLAPSE:</b> {cur['topology']['type']}<br>{cur['topology']['desc']}</div>", unsafe_allow_html=True)
+
+        st.markdown(
+            f"""
+<div class='collapse-alert'>
+⚠️ <b>TOPOLOGICAL COLLAPSE:</b>
+{cur['topology']['type']}
+<br>
+{cur['topology']['desc']}
+</div>
+""",
+            unsafe_allow_html=True
+        )
+
     c1, c2 = st.columns([2.5, 1])
+
     with c1:
-        with st.expander("VECTOR FIELD (7D GRAVITY)", expanded=True):
+
+        with st.expander(
+            "VECTOR FIELD (7D GRAVITY)",
+            expanded=True
+        ):
+
             for k in TENSION_KEYS:
-                color = "🔵" if cur['tensions'][k] > 0.7 else "⚪"
-                st.write(f"{color} **{k}:** {cur['tensions'][k]:.2f}")
+
+                color = (
+                    "🔵"
+                    if cur['tensions'][k] > 0.7
+                    else "⚪"
+                )
+
+                st.write(
+                    f"{color} **{k}:** {cur['tensions'][k]:.2f}"
+                )
+
     with c2:
-        st.metric("ENTROPY", f"{cur['entropy']:.2f}")
+
+        st.metric(
+            "ENTROPY",
+            f"{cur['entropy']:.2f}"
+        )
+
+
+# =============================================================================
+# INPUT
+# =============================================================================
 
 user_query = None
 is_init = False
 
 if not st.session_state.chat_messages:
-    topic_input = st.text_area("RENDSZER-INPUT (Nyers adat a kognitív reaktorba)", height=150)
-    if st.button("⚡ EXECUTE COGNITIVE PIPELINE") and topic_input:
+
+    topic_input = st.text_area(
+        "RENDSZER-INPUT (Nyers adat a kognitív reaktorba)",
+        height=150
+    )
+
+    if (
+        st.button("⚡ EXECUTE COGNITIVE PIPELINE")
+        and topic_input
+    ):
+
         user_query = topic_input
         is_init = True
+
 else:
+
     for msg in st.session_state.chat_messages:
-        with st.chat_message(msg["role"], avatar="⬛" if msg["role"] == "assistant" else "👤"): st.markdown(msg["content"])
-    user_query = st.chat_input("Új input a futó rendszernek...")
+
+        with st.chat_message(
+            msg["role"],
+            avatar="⬛" if msg["role"] == "assistant" else "👤"
+        ):
+
+            st.markdown(msg["content"])
+
+    user_query = st.chat_input(
+        "Új input a futó rendszernek..."
+    )
 
 
 # =============================================================================
-# EXECUTION (JAVÍTOTT SORREND)
+# EXECUTION
 # =============================================================================
 
 if user_query:
+
     if not is_init:
-        st.session_state.chat_messages.append({"role": "user", "content": user_query})
-        with st.chat_message("user", avatar="👤"): st.markdown(user_query)
 
-    with st.status("⚙️ Kognitív Reaktor Fut...", expanded=True) as status:
+        st.session_state.chat_messages.append({
+            "role": "user",
+            "content": user_query
+        })
+
+        with st.chat_message(
+            "user",
+            avatar="👤"
+        ):
+
+            st.markdown(user_query)
+
+    with st.status(
+        "⚙️ Kognitív Reaktor Fut...",
+        expanded=True
+    ) as status:
+
         pat_data = pat_eng.scan(user_query)
-        new_json, comp_use = comp.compile_state(user_query, pat_data)
+
+        new_json, comp_use = comp.compile_state(
+            user_query,
+            pat_data
+        )
+
         update_cost(comp_use)
-        st.session_state.state_history = st_mach.update(st.session_state.state_history, new_json, pat_data['entropy'])
-        status.update(label="✅ OMNI Dekódolás kész.", state="complete")
 
-    prompt = WritingEngine.generate_prompt(run_state, run_mode, web_mode, out_format, switches, st.session_state.state_history[-1], pat_data)
+        st.session_state.state_history = st_mach.update(
+            st.session_state.state_history,
+            new_json,
+            pat_data['entropy']
+        )
 
-    with st.chat_message("assistant", avatar="⬛"):
+        status.update(
+            label="✅ OMNI Dekódolás kész.",
+            state="complete"
+        )
+
+    prompt = WritingEngine.generate_prompt(
+        run_state,
+        run_mode,
+        web_mode,
+        out_format,
+        switches,
+        st.session_state.state_history[-1],
+        pat_data
+    )
+
+    with st.chat_message(
+        "assistant",
+        avatar="⬛"
+    ):
+
         resp = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "system", "content": prompt}, {"role": "user", "content": user_query}]
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": user_query
+                }
+            ]
         )
-        out = resp.choices[0].message.content
-        update_cost(resp.usage)
-        st.markdown(out)
-        st.session_state.chat_messages.append({"role": "assistant", "content": out})
-    st.rerun()
 
+        out = resp.choices[0].message.content
+
+        update_cost(resp.usage)
+
+        st.markdown(out)
+
+        st.session_state.chat_messages.append({
+            "role": "assistant",
+            "content": out
+        })
+
+    st.rerun()
