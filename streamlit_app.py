@@ -1092,6 +1092,28 @@ if uploaded_file is not None:
         )
 
 # =============================================================================
+# INPUT MODULE
+# STABILIZED MULTIMODAL VERSION
+# =============================================================================
+
+user_query = None
+is_init = False
+
+# =============================================================================
+# SESSION LOCKS
+# =============================================================================
+
+if "last_audio_id" not in st.session_state:
+    st.session_state.last_audio_id = None
+
+if "last_uploaded_file" not in st.session_state:
+    st.session_state.last_uploaded_file = None
+
+if "is_processing" not in st.session_state:
+    st.session_state.is_processing = False
+
+
+# =============================================================================
 # INITIAL INPUT MODE
 # =============================================================================
 
@@ -1099,19 +1121,111 @@ if not st.session_state.chat_messages:
 
     topic_input = st.text_area(
         "RENDSZER-INPUT (Nyers adat a kognitív reaktorba)",
-        height=180
+        height=150
     )
 
-    col1, col2 = st.columns([4, 1])
+    # -------------------------------------------------------------------------
+    # AUDIO INPUT
+    # -------------------------------------------------------------------------
 
-    with col1:
+    audio = st.audio_input("🎤 Voice Input")
 
-        execute_clicked = st.button(
-            "⚡ EXECUTE COGNITIVE PIPELINE"
-        )
+    if audio is not None:
 
+        audio_id = f"{audio.name}_{audio.size}"
 
-    if execute_clicked and topic_input:
+        if st.session_state.last_audio_id != audio_id:
+
+            st.session_state.last_audio_id = audio_id
+
+            with st.spinner("🎧 Audio feldolgozás..."):
+
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio
+                )
+
+                topic_input = transcript.text
+
+                st.success("✅ Audio betöltve")
+
+    # -------------------------------------------------------------------------
+    # FILE UPLOAD
+    # -------------------------------------------------------------------------
+
+    uploaded_file = st.file_uploader(
+        "📎 File Upload",
+        type=["txt", "pdf", "png", "jpg", "jpeg"]
+    )
+
+    if uploaded_file is not None:
+
+        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+
+        if st.session_state.last_uploaded_file != file_id:
+
+            st.session_state.last_uploaded_file = file_id
+
+            st.success(f"✅ Feltöltve: {uploaded_file.name}")
+
+            # -----------------------------------------------------------------
+            # TXT PARSER
+            # -----------------------------------------------------------------
+
+            if uploaded_file.type == "text/plain":
+
+                file_text = uploaded_file.read().decode("utf-8")
+
+                topic_input += f"""
+
+--- FILE CONTENT START ---
+
+{file_text}
+
+--- FILE CONTENT END ---
+"""
+
+            # -----------------------------------------------------------------
+            # PDF PLACEHOLDER
+            # -----------------------------------------------------------------
+
+            elif uploaded_file.type == "application/pdf":
+
+                topic_input += f"""
+
+⚠️ PDF FILE DETECTED:
+{uploaded_file.name}
+
+(PDF parser még nincs implementálva.)
+"""
+
+            # -----------------------------------------------------------------
+            # IMAGE PLACEHOLDER
+            # -----------------------------------------------------------------
+
+            elif uploaded_file.type.startswith("image/"):
+
+                st.image(uploaded_file)
+
+                topic_input += f"""
+
+⚠️ IMAGE FILE DETECTED:
+{uploaded_file.name}
+
+(Vision parser még nincs implementálva.)
+"""
+
+    # -------------------------------------------------------------------------
+    # EXECUTION BUTTON
+    # -------------------------------------------------------------------------
+
+    if (
+        st.button("⚡ EXECUTE COGNITIVE PIPELINE")
+        and topic_input
+        and not st.session_state.is_processing
+    ):
+
+        st.session_state.is_processing = True
 
         user_query = topic_input
         is_init = True
@@ -1132,57 +1246,121 @@ else:
 
             st.markdown(msg["content"])
 
-    col1, col2 = st.columns([4, 1])
+    # -------------------------------------------------------------------------
+    # TEXT INPUT
+    # -------------------------------------------------------------------------
 
-    with col1:
+    text_query = st.chat_input(
+        "Új input a futó rendszernek..."
+    )
 
-        txt = st.chat_input(
-            "Új input a futó rendszernek..."
-        )
+    if text_query and not st.session_state.is_processing:
 
-        if txt:
+        st.session_state.is_processing = True
 
-            user_query = txt
+        user_query = text_query
 
-    with col2:
+    # -------------------------------------------------------------------------
+    # AUDIO INPUT
+    # -------------------------------------------------------------------------
 
-        audio = st.audio_input("🎤")
+    audio = st.audio_input("🎤 Voice Input")
 
-        if audio is not None:
+    if audio is not None:
 
-            try:
+        audio_id = f"{audio.name}_{audio.size}"
 
-                audio_bytes = audio.read()
+        if st.session_state.last_audio_id != audio_id:
 
-                st.success(
-                    f"🎤 Audio rögzítve ({len(audio_bytes)} bytes)"
+            st.session_state.last_audio_id = audio_id
+
+            with st.spinner("🎧 Audio feldolgozás..."):
+
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio
                 )
-
-                with tempfile.NamedTemporaryFile(
-                    delete=False,
-                    suffix=".wav"
-                ) as tmp_file:
-
-                    tmp_file.write(audio_bytes)
-
-                    tmp_path = tmp_file.name
-
-                with open(tmp_path, "rb") as audio_file:
-
-                    transcript = client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file
-                    )
 
                 user_query = transcript.text
 
-                st.success("✅ Whisper dekódolás sikeres")
+                st.session_state.is_processing = True
 
-                st.info(transcript.text)
+                st.success("✅ Audio transcribed")
 
-            except Exception as e:
+    # -------------------------------------------------------------------------
+    # FILE UPLOAD
+    # -------------------------------------------------------------------------
 
-                st.error(f"WHISPER ERROR: {e}")
+    uploaded_file = st.file_uploader(
+        "📎 File Upload",
+        type=["txt", "pdf", "png", "jpg", "jpeg"],
+        key="chat_upload"
+    )
+
+    if uploaded_file is not None:
+
+        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+
+        if st.session_state.last_uploaded_file != file_id:
+
+            st.session_state.last_uploaded_file = file_id
+
+            st.success(f"✅ Feltöltve: {uploaded_file.name}")
+
+            # -----------------------------------------------------------------
+            # TXT PARSER
+            # -----------------------------------------------------------------
+
+            if uploaded_file.type == "text/plain":
+
+                file_text = uploaded_file.read().decode("utf-8")
+
+                user_query = f"""
+
+FILE INPUT DETECTED
+
+--- FILE CONTENT START ---
+
+{file_text}
+
+--- FILE CONTENT END ---
+"""
+
+                st.session_state.is_processing = True
+
+            # -----------------------------------------------------------------
+            # PDF PLACEHOLDER
+            # -----------------------------------------------------------------
+
+            elif uploaded_file.type == "application/pdf":
+
+                user_query = f"""
+
+PDF FILE DETECTED:
+{uploaded_file.name}
+
+⚠️ PDF parser még nincs implementálva.
+"""
+
+                st.session_state.is_processing = True
+
+            # -----------------------------------------------------------------
+            # IMAGE PLACEHOLDER
+            # -----------------------------------------------------------------
+
+            elif uploaded_file.type.startswith("image/"):
+
+                st.image(uploaded_file)
+
+                user_query = f"""
+
+IMAGE FILE DETECTED:
+{uploaded_file.name}
+
+⚠️ Vision parser még nincs implementálva.
+"""
+
+                st.session_state.is_processing = True
 # =============================================================================
 # EXECUTION
 # =============================================================================
