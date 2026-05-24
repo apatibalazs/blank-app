@@ -36,7 +36,8 @@ class PatternEngine:
 class MemoryCompiler:
     def __init__(self, client): self.client = client
     def compile_state(self, user_input, pattern_data):
-        prompt = f"COGNITO MEMORY COMPILER. 7D vektor JSON-t írj. Inverziók: {json.dumps(pattern_data['patterns'])}. SÉMA: {{\"tensions\": {{\"TENGELY_NEVE\": float(0-1)}}, \"reality_anchors\": [{\"entity\": \"string\", \"fact\": \"string\"}]}}"
+        json_schema = '{"tensions": {"TENGELY_NEVE": "float(0-1)"}, "reality_anchors": [{"entity": "string", "fact": "string"}]}'
+        prompt = f"COGNITO MEMORY COMPILER. 7D vektor JSON-t írj. Inverziók: {json.dumps(pattern_data['patterns'])}. SÉMA: {json_schema}"
         try:
             res = self.client.chat.completions.create(model="gpt-4o", response_format={"type": "json_object"}, messages=[{"role": "system", "content": prompt}, {"role": "user", "content": user_input}], temperature=0.1)
             return json.loads(res.choices[0].message.content), res.usage
@@ -126,4 +127,4 @@ if "OPENAI_API_KEY" in st.secrets:
             except Exception as e:
                 st.error(f"REACTOR FAILURE: {e}")
             st.rerun()
-                                                
+    
