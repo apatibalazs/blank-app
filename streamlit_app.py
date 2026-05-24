@@ -1112,10 +1112,9 @@ if "last_uploaded_file" not in st.session_state:
 if "is_processing" not in st.session_state:
     st.session_state.is_processing = False
 
-
 # =============================================================================
 # INPUT + EXECUTION RUNTIME
-# STABLE WORKING VERSION
+# STREAMLIT SAFE VERSION
 # =============================================================================
 
 user_query = None
@@ -1135,6 +1134,50 @@ if "last_audio_id" not in st.session_state:
 
 if "last_uploaded_file" not in st.session_state:
     st.session_state.last_uploaded_file = None
+
+# -----------------------------------------------------------------------------
+# SAFE BUFFERS
+# -----------------------------------------------------------------------------
+
+if "pending_audio_text" not in st.session_state:
+    st.session_state.pending_audio_text = None
+
+if "pending_file_text" not in st.session_state:
+    st.session_state.pending_file_text = None
+
+
+# =============================================================================
+# APPLY PENDING AUDIO BUFFER
+# =============================================================================
+
+if st.session_state.pending_audio_text is not None:
+
+    st.session_state.main_input_box = (
+        st.session_state.pending_audio_text
+    )
+
+    st.session_state.input_text = (
+        st.session_state.pending_audio_text
+    )
+
+    st.session_state.pending_audio_text = None
+
+
+# =============================================================================
+# APPLY PENDING FILE BUFFER
+# =============================================================================
+
+if st.session_state.pending_file_text is not None:
+
+    st.session_state.main_input_box += (
+        st.session_state.pending_file_text
+    )
+
+    st.session_state.input_text = (
+        st.session_state.main_input_box
+    )
+
+    st.session_state.pending_file_text = None
 
 
 # =============================================================================
@@ -1163,10 +1206,6 @@ st.text_area(
     key="main_input_box"
 )
 
-# -------------------------------------------------------------------------
-# Sync widget -> runtime state
-# -------------------------------------------------------------------------
-
 st.session_state.input_text = (
     st.session_state.main_input_box
 )
@@ -1185,10 +1224,6 @@ if audio is not None:
 
     audio_id = f"{audio.name}_{audio.size}"
 
-    # ---------------------------------------------------------------------
-    # Prevent infinite rerun loop
-    # ---------------------------------------------------------------------
-
     if st.session_state.last_audio_id != audio_id:
 
         st.session_state.last_audio_id = audio_id
@@ -1201,14 +1236,10 @@ if audio is not None:
             )
 
             # -------------------------------------------------------------
-            # Write transcript directly into widget state
+            # SAFE BUFFER WRITE
             # -------------------------------------------------------------
 
-            st.session_state.main_input_box = (
-                transcript.text
-            )
-
-            st.session_state.input_text = (
+            st.session_state.pending_audio_text = (
                 transcript.text
             )
 
@@ -1235,10 +1266,6 @@ if uploaded_file is not None:
 
     file_id = f"{uploaded_file.name}_{uploaded_file.size}"
 
-    # ---------------------------------------------------------------------
-    # Prevent duplicate reruns
-    # ---------------------------------------------------------------------
-
     if st.session_state.last_uploaded_file != file_id:
 
         st.session_state.last_uploaded_file = file_id
@@ -1257,7 +1284,7 @@ if uploaded_file is not None:
                 "utf-8"
             )
 
-            st.session_state.main_input_box += f"""
+            st.session_state.pending_file_text = f"""
 
 --- FILE CONTENT START ---
 
@@ -1265,10 +1292,6 @@ if uploaded_file is not None:
 
 --- FILE CONTENT END ---
 """
-
-            st.session_state.input_text = (
-                st.session_state.main_input_box
-            )
 
             st.rerun()
 
@@ -1430,5 +1453,9 @@ if user_query:
     st.session_state.last_audio_id = None
 
     st.session_state.last_uploaded_file = None
+
+    st.session_state.pending_audio_text = None
+
+    st.session_state.pending_file_text = None
 
     st.rerun()
