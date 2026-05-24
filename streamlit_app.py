@@ -1353,18 +1353,6 @@ if execute_clicked:
             st.session_state.input_text
         )
 
-
-# =============================================================================
-# EXECUTION ENGINE
-# =============================================================================
-
-execute_clicked = st.button(
-    "⚡ EXECUTE COGNITIVE PIPELINE",
-    key="execute_pipeline_button"
-)
-
-if execute_clicked and user_query:
-
     # =========================================================================
     # STORE USER MESSAGE
     # =========================================================================
