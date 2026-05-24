@@ -1555,106 +1555,9 @@ if user_query:
             state="complete"
         )
 
-    # =========================================================================
-    # PROMPT BUILD
-    # =========================================================================
-
-    prompt = WritingEngine.generate_prompt(
-        run_state,
-        run_mode,
-        web_mode,
-        out_format,
-        switches,
-        st.session_state.state_history[-1],
-        pat_data
-    )
-
     # =============================================================================
-    # EXECUTION
-    # =============================================================================
-
-        run_state,
-        run_mode,
-        web_mode,
-        out_format,
-        switches,
-        st.session_state.state_history[-1],
-        pat_data
-    )
-    #
-    # =========================================================================
-    # MODEL EXECUTION
-    # =========================================================================
-    # =============================================================================
-# EXECUTION TRIGGER
+# PROMPT BUILD
 # =============================================================================
-
-execute_clicked = st.button(
-    "⚡ EXECUTE COGNITIVE PIPELINE",
-    key="execute_pipeline_button",
-    use_container_width=True
-)
-
-# =============================================================================
-# EXECUTION
-# =============================================================================
-
-if execute_clicked and user_query:
-
-    # =========================================================================
-    # USER MESSAGE
-    # =========================================================================
-
-    if not is_init:
-
-        st.session_state.chat_messages.append({
-            "role": "user",
-            "content": user_query
-        })
-
-        with st.chat_message(
-            "user",
-            avatar="👤"
-        ):
-
-            st.markdown(user_query)
-
-    # =========================================================================
-    # COGNITIVE STATUS
-    # =========================================================================
-
-    with st.status(
-        "⚙️ Kognitív Reaktor Fut...",
-        expanded=True
-    ) as status:
-
-        pat_data = pat_eng.scan(
-            user_query
-        )
-
-        new_json, comp_use = comp.compile_state(
-            user_query,
-            pat_data
-        )
-
-        update_cost(comp_use)
-
-        st.session_state.state_history = (
-            st_mach.update(
-                st.session_state.state_history,
-                new_json,
-                pat_data['entropy']
-            )
-        )
-
-        status.update(
-            label="✅ OMNI Dekódolás kész.",
-            state="complete"
-        )
-
-    # =========================================================================
-    # PROMPT BUILD
-    # =========================================================================
 
     prompt = WritingEngine.generate_prompt(
         run_state,
@@ -1795,4 +1698,3 @@ st.markdown("---")
 st.caption(
     "COGNITO ENGINE — Multimodal Cognitive Runtime"
 )
-   
