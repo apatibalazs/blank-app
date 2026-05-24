@@ -1502,6 +1502,122 @@ for msg in st.session_state.chat_messages:
             )
 
 # ============================================================
+# INPUT AREA
+# ============================================================
+
+st.markdown("### RENDSZER-INPUT")
+
+st.text_area(
+    "",
+    key="input_text",
+    height=220,
+    placeholder="Írd be a futtatandó témát..."
+)
+
+# ============================================================
+# EXECUTION BUTTON
+# ============================================================
+
+execute_clicked = st.button(
+    "⚡ EXECUTE COGNITIVE PIPELINE",
+    key="main_execute_button",
+    use_container_width=True
+)
+
+# ============================================================
+# EXECUTION ENGINE
+# ============================================================
+
+if execute_clicked:
+
+    if st.session_state.input_text.strip():
+
+        user_query = st.session_state.input_text
+
+        # SAVE USER MESSAGE
+
+        st.session_state.chat_messages.append({
+            "role": "user",
+            "content": user_query
+        })
+
+        # COGNITIVE STATUS
+
+        with st.status(
+            "⚙️ Kognitív Reaktor Fut...",
+            expanded=True
+        ) as status:
+
+            pat_data = pat_eng.scan(
+                user_query
+            )
+
+            new_json, comp_use = comp.compile_state(
+                user_query,
+                pat_data
+            )
+
+            update_cost(comp_use)
+
+            st.session_state.state_history = (
+                st_mach.update(
+                    st.session_state.state_history,
+                    new_json,
+                    pat_data["entropy"]
+                )
+            )
+
+            status.update(
+                label="✅ OMNI Dekódolás kész.",
+                state="complete"
+            )
+
+        # PROMPT BUILD
+
+        prompt = WritingEngine.generate_prompt(
+            run_state,
+            run_mode,
+            web_mode,
+            out_format,
+            switches,
+            st.session_state.state_history[-1],
+            pat_data
+        )
+
+        # MODEL EXECUTION
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": user_query
+                }
+            ]
+        )
+
+        out = response.choices[0].message.content
+
+        update_cost(response.usage)
+
+        # SAVE ASSISTANT MESSAGE
+
+        st.session_state.chat_messages.append({
+            "role": "assistant",
+            "content": out
+        })
+
+        # CLEAR INPUT
+
+        st.session_state.input_text = ""
+
+        st.rerun()
+
+# ============================================================
 # FOOTER
 # ============================================================
 
