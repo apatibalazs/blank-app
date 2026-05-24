@@ -1445,12 +1445,45 @@ if execute_clicked and user_query:
         st.markdown(out)
 
         # ====================================================
-        # COPY OUTPUT
+        # COPY OUTPUT BUTTON
         # ====================================================
 
-        st.code(
-            out,
-            language=None
+        safe_out = (
+            out
+            .replace("\\", "\\\\")
+            .replace("`", "\\`")
+            .replace("$", "\\$")
+        )
+
+        copy_html = f"""
+        <button onclick="
+        navigator.clipboard.writeText(`{safe_out}`);
+        this.innerText='✅ COPIED';
+        setTimeout(() => {{
+            this.innerText='📋 COPY OUTPUT';
+        }}, 2000);
+        "
+        style="
+        width:100%;
+        padding:16px;
+        border:none;
+        border-radius:14px;
+        font-size:20px;
+        font-weight:bold;
+        background:linear-gradient(90deg,#00ffcc,#00bbff);
+        color:black;
+        cursor:pointer;
+        margin-top:15px;
+        margin-bottom:10px;
+        box-shadow:0 0 20px rgba(0,255,200,0.45);
+        ">
+        📋 COPY OUTPUT
+        </button>
+        """
+
+        st.components.v1.html(
+            copy_html,
+            height=90
         )
 
     # ========================================================
