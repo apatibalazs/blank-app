@@ -1110,45 +1110,6 @@ if not st.session_state.chat_messages:
             "⚡ EXECUTE COGNITIVE PIPELINE"
         )
 
-    with col2:
-
-        audio = st.audio_input("🎤")
-
-        if audio is not None:
-
-            try:
-
-                audio_bytes = audio.read()
-
-                st.success(
-                    f"🎤 Audio rögzítve ({len(audio_bytes)} bytes)"
-                )
-
-                with tempfile.NamedTemporaryFile(
-                    delete=False,
-                    suffix=".wav"
-                ) as tmp_file:
-
-                    tmp_file.write(audio_bytes)
-
-                    tmp_path = tmp_file.name
-
-                with open(tmp_path, "rb") as audio_file:
-
-                    transcript = client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file
-                    )
-
-                topic_input = transcript.text
-
-                st.success("✅ Whisper dekódolás sikeres")
-
-                st.info(transcript.text)
-
-            except Exception as e:
-
-                st.error(f"WHISPER ERROR: {e}")
 
     if execute_clicked and topic_input:
 
