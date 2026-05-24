@@ -1451,7 +1451,14 @@ if user_query:
 
         update_cost(resp.usage)
 
-        st.markdown(out)
+       st.markdown(out)
+
+st.caption("📋 COPYABLE VERSION")
+
+st.code(
+    out,
+    language=None
+)
 
         st.session_state.chat_messages.append({
             "role": "assistant",
