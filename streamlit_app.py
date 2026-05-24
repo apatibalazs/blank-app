@@ -1032,12 +1032,17 @@ if st.session_state.state_history:
 
 # =============================================================================
 
-# =============================================================================
+# # =============================================================================
 # INPUT
 # =============================================================================
 
 user_query = None
 is_init = False
+
+
+# =============================================================================
+# INITIAL INPUT MODE
+# =============================================================================
 
 if not st.session_state.chat_messages:
 
@@ -1058,27 +1063,48 @@ if not st.session_state.chat_messages:
 
         audio = st.audio_input("🎤")
 
-        if audio:
+        if audio is not None:
 
-            try:
+            if (
+                "last_audio_id" not in st.session_state
+                or
+                st.session_state.last_audio_id != audio.id
+            ):
 
-                transcript = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio
-                )
+                st.session_state.last_audio_id = audio.id
 
-                topic_input = transcript.text
+                try:
 
-                st.success("Voice input dekódolva.")
+                    transcript = client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio
+                    )
 
-            except Exception as e:
+                    topic_input = transcript.text
 
-                st.error(f"Whisper hiba: {e}")
+                    st.success(
+                        "🎤 Voice input dekódolva."
+                    )
+
+                    st.info(
+                        transcript.text
+                    )
+
+                except Exception as e:
+
+                    st.error(
+                        f"Whisper hiba: {e}"
+                    )
 
     if execute_clicked and topic_input:
 
         user_query = topic_input
         is_init = True
+
+
+# =============================================================================
+# CHAT MODE
+# =============================================================================
 
 else:
 
@@ -1107,22 +1133,38 @@ else:
 
         audio = st.audio_input("🎤")
 
-        if audio:
+        if audio is not None:
 
-            try:
+            if (
+                "last_audio_id" not in st.session_state
+                or
+                st.session_state.last_audio_id != audio.id
+            ):
 
-                transcript = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio
-                )
+                st.session_state.last_audio_id = audio.id
 
-                user_query = transcript.text
+                try:
 
-                st.success("Voice input dekódolva.")
+                    transcript = client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio
+                    )
 
-            except Exception as e:
+                    user_query = transcript.text
 
-                st.error(f"Whisper hiba: {e}")
+                    st.success(
+                        "🎤 Voice input dekódolva."
+                    )
+
+                    st.info(
+                        transcript.text
+                    )
+
+                except Exception as e:
+
+                    st.error(
+                        f"Whisper hiba: {e}"
+    )
 # =============================================================================
 # EXECUTION
 # =============================================================================
