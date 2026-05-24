@@ -1486,12 +1486,15 @@ if user_query:
         st.session_state.state_history[-1],
         pat_data
     )
-
-    # =============================================================================
+# =============================================================================
 # EXECUTION
 # =============================================================================
 
 if user_query:
+
+    # =========================================================================
+    # USER MESSAGE
+    # =========================================================================
 
     if not is_init:
 
@@ -1516,7 +1519,9 @@ if user_query:
         expanded=True
     ) as status:
 
-        pat_data = pat_eng.scan(user_query)
+        pat_data = pat_eng.scan(
+            user_query
+        )
 
         new_json, comp_use = comp.compile_state(
             user_query,
@@ -1525,10 +1530,12 @@ if user_query:
 
         update_cost(comp_use)
 
-        st.session_state.state_history = st_mach.update(
-            st.session_state.state_history,
-            new_json,
-            pat_data['entropy']
+        st.session_state.state_history = (
+            st_mach.update(
+                st.session_state.state_history,
+                new_json,
+                pat_data['entropy']
+            )
         )
 
         status.update(
@@ -1549,9 +1556,33 @@ if user_query:
         st.session_state.state_history[-1],
         pat_data
     )
-    #
+
     # =========================================================================
     # MODEL EXECUTION
+    # =========================================================================
+
+    resp = client.chat.completions.create(
+
+        model="gpt-4o",
+
+        messages=[
+            {
+                "role": "system",
+                "content": prompt
+            },
+            {
+                "role": "user",
+                "content": user_query
+            }
+        ]
+    )
+
+    out = resp.choices[0].message.content
+
+    update_cost(resp.usage)
+
+    # =========================================================================
+    # ASSISTANT OUTPUT
     # =========================================================================
 
     with st.chat_message(
@@ -1559,37 +1590,27 @@ if user_query:
         avatar="⬛"
     ):
 
-        resp = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "system",
-                    "content": prompt
-                },
-                {
-                    "role": "user",
-                    "content": user_query
-                }
-            ]
-        )
-
-        out = resp.choices[0].message.content
-
-        update_cost(resp.usage)
-
         st.markdown(out)
 
-        st.caption("📋 COPYABLE VERSION")
+    # =========================================================================
+    # COPYABLE OUTPUT
+    # =========================================================================
 
-        st.code(
-            out,
-            language=None
-        )
+    st.caption("📋 COPYABLE OUTPUT")
 
-        st.session_state.chat_messages.append({
-            "role": "assistant",
-            "content": out
-        })
+    st.code(
+        out,
+        language=None
+    )
+
+    # =========================================================================
+    # SAVE CHAT MEMORY
+    # =========================================================================
+
+    st.session_state.chat_messages.append({
+        "role": "assistant",
+        "content": out
+    })
 
     # =========================================================================
     # SAFE RESET
