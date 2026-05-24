@@ -3,7 +3,9 @@
 # FULL STREAMLIT APP
 # BLOCK 1 / 2
 # =============================================================================
-
+import fitz
+import base64
+from PIL import Image
 import streamlit as st
 import time
 import json
@@ -1042,54 +1044,143 @@ user_query = None
 is_init = False
 
 # =============================================================================
-# FILE / IMAGE UPLOAD
+# FILE UPLOADER
+# REAL MULTIMODAL VERSION
 # =============================================================================
 
 uploaded_file = st.file_uploader(
     "📎 FILE / IMAGE INPUT",
-    type=["png", "jpg", "jpeg", "pdf", "txt"]
+    type=[
+        "txt",
+        "pdf",
+        "png",
+        "jpg",
+        "jpeg"
+    ],
+    key="main_file_upload"
 )
 
 if uploaded_file is not None:
 
-    st.success(f"Feltöltve: {uploaded_file.name}")
+    file_id = f"{uploaded_file.name}_{uploaded_file.size}"
 
-    file_type = uploaded_file.type
+    if st.session_state.last_uploaded_file != file_id:
 
-    # =============================================================================
-    # IMAGE PREVIEW
-    # =============================================================================
+        st.session_state.last_uploaded_file = file_id
 
-    if file_type.startswith("image"):
-
-        st.image(
-            uploaded_file,
-            use_container_width=True
+        st.success(
+            f"✅ Feltöltve: {uploaded_file.name}"
         )
 
-    # =============================================================================
-    # TEXT FILE PREVIEW
-    # =============================================================================
+        # ================================================================
+        # TXT
+        # ================================================================
 
-    elif file_type == "text/plain":
+        if uploaded_file.type == "text/plain":
 
-        text_content = uploaded_file.read().decode("utf-8")
+            file_text = uploaded_file.read().decode(
+                "utf-8"
+            )
 
-        st.text_area(
-            "FILE CONTENT",
-            text_content,
-            height=200
-        )
+            st.session_state.pending_file_text = f"""
 
-    # =============================================================================
-    # PDF INFO
-    # =============================================================================
+--- TXT FILE START ---
 
-    elif file_type == "application/pdf":
+{file_text}
 
-        st.info(
-            "PDF feltöltve. PDF parser még nincs bekötve."
-        )
+--- TXT FILE END ---
+"""
+
+            st.rerun()
+
+        # ================================================================
+        # PDF
+        # ================================================================
+
+        elif uploaded_file.type == "application/pdf":
+
+            pdf_text = ""
+
+            pdf = fitz.open(
+                stream=uploaded_file.read(),
+                filetype="pdf"
+            )
+
+            for page in pdf:
+
+                pdf_text += page.get_text()
+
+            st.session_state.pending_file_text = f"""
+
+--- PDF FILE START ---
+
+{pdf_text}
+
+--- PDF FILE END ---
+"""
+
+            st.rerun()
+
+        # ================================================================
+        # IMAGE
+        # ================================================================
+
+        elif uploaded_file.type.startswith("image/"):
+
+            st.image(
+                uploaded_file,
+                use_container_width=True
+            )
+
+            image_bytes = uploaded_file.read()
+
+            base64_image = base64.b64encode(
+                image_bytes
+            ).decode("utf-8")
+
+            vision_response = client.chat.completions.create(
+
+                model="gpt-4o",
+
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+
+                            {
+                                "type": "text",
+                                "text": "Elemezd részletesen ezt a képet."
+                            },
+
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}"
+                                }
+                            }
+                        ]
+                    }
+                ]
+
+            )
+
+            image_analysis = (
+                vision_response
+                .choices[0]
+                .message
+                .content
+            )
+
+            st.session_state.pending_file_text = f"""
+
+--- IMAGE ANALYSIS START ---
+
+{image_analysis}
+
+--- IMAGE ANALYSIS END ---
+"""
+
+            st.rerun()
 
 # =============================================================================
 # INPUT + EXECUTION RUNTIME
