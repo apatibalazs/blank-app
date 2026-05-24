@@ -2,7 +2,7 @@ import streamlit as st
 
 # =============================================================================
 # COGNITO HELP MODULE
-# Reactor Console Companion System
+# MOBILE SAFE VERSION
 # =============================================================================
 
 def get_help_text(key):
@@ -16,24 +16,24 @@ def get_help_text(key):
         "FOG": {
             "title": "FOG STATE",
             "summary": "Bizonytalansági mező.",
-            "use_case": "Koncepció-tervezés, korai iránykeresés.",
-            "warning": "Alacsony konvergencia, diffúz fókusz.",
+            "use_case": "Koncepció-tervezés, iránykeresés.",
+            "warning": "Alacsony konvergencia.",
             "combo": "FOG + BALANCED"
         },
 
         "SPARK": {
             "title": "SPARK STATE",
             "summary": "Asszociációs gyújtás.",
-            "use_case": "Új kapcsolatok, kreatív ugrások.",
-            "warning": "Zajos vagy széteső output.",
+            "use_case": "Új kapcsolatok és kreatív ugrások.",
+            "warning": "Zajos output.",
             "combo": "SPARK + CREATIVE"
         },
 
         "CUT": {
             "title": "CUT STATE",
             "summary": "Sebészeti analízis.",
-            "use_case": "Redundancia eltávolítása, érvek kiélezése.",
-            "warning": "Túlzott redukció, száraz output.",
+            "use_case": "Redundancia törlése.",
+            "warning": "Túlzott redukció.",
             "combo": "CUT + SCIENTIFIC"
         },
 
@@ -48,23 +48,23 @@ def get_help_text(key):
         "COLLISION": {
             "title": "COLLISION STATE",
             "summary": "Valósági ütköztetés.",
-            "use_case": "Absztrakciók földelése konkrét következményekre.",
-            "warning": "Disszonancia és túlkemény konklúziók.",
+            "use_case": "Absztrakciók földelése.",
+            "warning": "Disszonancia veszélye.",
             "combo": "COLLISION + SCIENTIFIC"
         },
 
         "BREAK": {
             "title": "BREAK STATE",
             "summary": "Paradigmaromboló mód.",
-            "use_case": "Beidegződések és stabil narratívák széttörése.",
-            "warning": "Absztrakt túlterhelés, paradox hurok.",
+            "use_case": "Stabil narratívák széttörése.",
+            "warning": "Paradox hurok.",
             "combo": "BREAK + DEEP"
         },
 
         "ALCHEMY": {
             "title": "ALCHEMY STATE",
             "summary": "Transzmutációs szintézis.",
-            "use_case": "Új fogalmi hálózatok és nyelvi struktúrák építése.",
+            "use_case": "Új fogalmi struktúrák.",
             "warning": "Jelentés-instabilitás.",
             "combo": "ALCHEMY + COLLISION"
         },
@@ -76,15 +76,15 @@ def get_help_text(key):
         "QUICK": {
             "title": "QUICK MODE",
             "summary": "Gyors lineáris futás.",
-            "use_case": "Rapid diagnózis és rövid elemzés.",
-            "warning": "Felületi következtetések.",
+            "use_case": "Rapid diagnózis.",
+            "warning": "Felületi elemzés.",
             "combo": "QUICK + CUT"
         },
 
         "BALANCED": {
             "title": "BALANCED MODE",
-            "summary": "Általános operációs egyensúly.",
-            "use_case": "Standard Cognito futások.",
+            "summary": "Standard operáció.",
+            "use_case": "Általános futások.",
             "warning": "Közepes intenzitás.",
             "combo": "BALANCED + FOG"
         },
@@ -92,105 +92,25 @@ def get_help_text(key):
         "DEEP": {
             "title": "DEEP MODE",
             "summary": "Rekurzív mélyelemzés.",
-            "use_case": "Esszék, stratégiai gondolkodás, komplex konfliktusok.",
-            "warning": "Token- és mentális túlterhelés.",
+            "use_case": "Komplex konfliktusok.",
+            "warning": "Mentális túlterhelés.",
             "combo": "DEEP + BREAK"
         },
 
         "CREATIVE": {
             "title": "CREATIVE MODE",
             "summary": "Divergens gondolkodás.",
-            "use_case": "Fogalomalkotás és kreatív struktúrák.",
+            "use_case": "Fogalomalkotás.",
             "warning": "Elszakadás a realitástól.",
             "combo": "CREATIVE + SPARK"
         },
 
         "SCIENTIFIC": {
             "title": "SCIENTIFIC MODE",
-            "summary": "Evidence-first logikai keret.",
-            "use_case": "Forenzikus és adatvezérelt elemzés.",
-            "warning": "Túlzott rigiditás.",
+            "summary": "Evidence-first mód.",
+            "use_case": "Forenzikus elemzés.",
+            "warning": "Rigiditás.",
             "combo": "SCIENTIFIC + COLLISION"
-        },
-
-        # =====================================================================
-        # WEB
-        # =====================================================================
-
-        "OFF": {
-            "title": "WEB OFF",
-            "summary": "Külső adatok tiltva.",
-            "use_case": "Zárt konceptuális futások.",
-            "warning": "Reality anchor hiány.",
-            "combo": "OFF + ALCHEMY"
-        },
-
-        "AUTO": {
-            "title": "WEB AUTO",
-            "summary": "Adaptív webhasználat.",
-            "use_case": "Általános operáció.",
-            "warning": "Inkonzisztens forráshasználat.",
-            "combo": "AUTO + BALANCED"
-        },
-
-        "ON": {
-            "title": "WEB ON",
-            "summary": "Kényszerített külső validáció.",
-            "use_case": "Aktuálpolitika, piaci vagy valós idejű rendszerek.",
-            "warning": "Információs zaj.",
-            "combo": "ON + SCIENTIFIC"
-        },
-
-        # =====================================================================
-        # SWITCHES
-        # =====================================================================
-
-        "ENGINE_MODE": {
-            "title": "ENGINE MODE",
-            "summary": "A Cognito reaktor aktiválása.",
-            "use_case": "Teljes runtime működés.",
-            "warning": "Instabil output generálódhat.",
-            "combo": "ENGINE_MODE + OPEN_SYSTEM"
-        },
-
-        "OPEN_SYSTEM": {
-            "title": "OPEN SYSTEM",
-            "summary": "A paradoxonok nyitva tartása.",
-            "use_case": "Korai lezárás megakadályozása.",
-            "warning": "Végtelen destabilizáció.",
-            "combo": "OPEN_SYSTEM + BREAK"
-        },
-
-        "DECISION_MODE": {
-            "title": "DECISION MODE",
-            "summary": "Kényszerített konklúzió.",
-            "use_case": "Döntési helyzetek.",
-            "warning": "Alternatívák eliminációja.",
-            "combo": "DECISION_MODE + PRESSURE"
-        },
-
-        "VALIDATION_MODE": {
-            "title": "VALIDATION MODE",
-            "summary": "Önellenőrzés és logikai audit.",
-            "use_case": "Konzisztencia-vizsgálat.",
-            "warning": "Lassabb futás.",
-            "combo": "VALIDATION_MODE + SCIENTIFIC"
-        },
-
-        "ANTI_CLOSURE": {
-            "title": "ANTI-CLOSURE",
-            "summary": "Lezárásellenes mechanizmus.",
-            "use_case": "Nyitott feszültségek fenntartása.",
-            "warning": "Paradox túlburjánzás.",
-            "combo": "ANTI_CLOSURE + BREAK"
-        },
-
-        "LOSS_TRACKING": {
-            "title": "LOSS TRACKING",
-            "summary": "Eliminált utak követése.",
-            "use_case": "Döntési veszteségek dokumentálása.",
-            "warning": "Magas mentális súly.",
-            "combo": "LOSS_TRACKING + DECISION_MODE"
         }
 
     }
@@ -199,7 +119,7 @@ def get_help_text(key):
 
 
 # =============================================================================
-# POPUP HELP RENDER
+# HELP DISPLAY
 # =============================================================================
 
 def show_help(key):
@@ -209,54 +129,57 @@ def show_help(key):
     if not data:
         return
 
-    with st.popover("ⓘ"):
+    with st.expander("ⓘ Súgó", expanded=False):
+
         st.markdown(f"### {data['title']}")
-        st.markdown(f"**Mire való:** {data['summary']}")
-        st.markdown(f"**Használd:** {data['use_case']}")
-        st.markdown(f"**Kockázat:** :red[{data['warning']}]")
-        st.markdown(f"**Ajánlott kombó:** `{data['combo']}`")
+
+        st.markdown(
+            f"**Mire való:** {data['summary']}"
+        )
+
+        st.markdown(
+            f"**Használd:** {data['use_case']}"
+        )
+
+        st.markdown(
+            f"**Kockázat:** :red[{data['warning']}]"
+        )
+
+        st.markdown(
+            f"**Ajánlott kombináció:** `{data['combo']}`"
+        )
 
 
 # =============================================================================
-# SELECTBOX + HELP WRAPPER
+# SELECTBOX + HELP
 # =============================================================================
 
 def help_selectbox(label, options, index=0, key=None):
 
-    col1, col2 = st.columns([4, 1])
+    value = st.selectbox(
+        label,
+        options=options,
+        index=index,
+        key=key
+    )
 
-    with col1:
-        value = st.selectbox(
-            label,
-            options=options,
-            index=index,
-            key=key
-        )
-
-    with col2:
-        st.markdown("<br>", unsafe_allow_html=True)
-        show_help(value)
+    show_help(value)
 
     return value
 
 
 # =============================================================================
-# TOGGLE + HELP WRAPPER
+# TOGGLE + HELP
 # =============================================================================
 
 def help_toggle(label, value=False, key=None):
 
-    col1, col2 = st.columns([4, 1])
+    val = st.toggle(
+        label,
+        value=value,
+        key=key
+    )
 
-    with col1:
-        val = st.toggle(
-            label,
-            value=value,
-            key=key
-        )
-
-    with col2:
-        st.markdown("<br>", unsafe_allow_html=True)
-        show_help(label)
+    show_help(label)
 
     return val
