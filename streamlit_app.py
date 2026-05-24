@@ -1448,44 +1448,31 @@ if execute_clicked and user_query:
         # COPY OUTPUT BUTTON
         # ====================================================
 
-        safe_out = (
-            out
-            .replace("\\", "\\\\")
-            .replace("`", "\\`")
-            .replace("$", "\\$")
-        )
+        
+safe_output = output.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$")
 
-        copy_html = f"""
-        <button onclick="
-        navigator.clipboard.writeText(`{safe_out}`);
-        this.innerText='✅ COPIED';
-        setTimeout(() => {{
-            this.innerText='📋 COPY OUTPUT';
-        }}, 2000);
-        "
-        style="
-        width:100%;
-        padding:16px;
-        border:none;
-        border-radius:14px;
-        font-size:20px;
-        font-weight:bold;
-        background:linear-gradient(90deg,#00ffcc,#00bbff);
-        color:black;
-        cursor:pointer;
-        margin-top:15px;
-        margin-bottom:10px;
-        box-shadow:0 0 20px rgba(0,255,200,0.45);
-        ">
-        📋 COPY OUTPUT
-        </button>
-        """
+copy_button = f"""
+<div style="margin-top:20px;">
+<button
+onclick='navigator.clipboard.writeText(`{safe_output}`)'
+style="
+width:100%;
+padding:16px;
+border:none;
+border-radius:14px;
+font-size:20px;
+font-weight:bold;
+cursor:pointer;
+background:linear-gradient(90deg,#00f5a0,#00d9ff);
+color:black;
+box-shadow:0 0 20px rgba(0,255,200,0.45);
+">
+📋 COPY OUTPUT
+</button>
+</div>
+"""
 
-        st.components.v1.html(
-            copy_html,
-            height=90
-        )
-
+st.markdown(copy_button, unsafe_allow_html=True)
     # ========================================================
     # SAVE ASSISTANT MESSAGE
     # ========================================================
