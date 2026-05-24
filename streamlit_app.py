@@ -1092,29 +1092,8 @@ if uploaded_file is not None:
         )
 
 # =============================================================================
-# INPUT MODULE
-# STABILIZED MULTIMODAL VERSION
-# =============================================================================
-
-user_query = None
-is_init = False
-
-# =============================================================================
-# SESSION LOCKS
-# =============================================================================
-
-if "last_audio_id" not in st.session_state:
-    st.session_state.last_audio_id = None
-
-if "last_uploaded_file" not in st.session_state:
-    st.session_state.last_uploaded_file = None
-
-if "is_processing" not in st.session_state:
-    st.session_state.is_processing = False
-
-# =============================================================================
 # INPUT + EXECUTION RUNTIME
-# STREAMLIT SAFE VERSION
+# FULL STABLE VERSION
 # =============================================================================
 
 user_query = None
@@ -1144,6 +1123,9 @@ if "pending_audio_text" not in st.session_state:
 
 if "pending_file_text" not in st.session_state:
     st.session_state.pending_file_text = None
+
+if "clear_input_next_run" not in st.session_state:
+    st.session_state.clear_input_next_run = False
 
 
 # =============================================================================
@@ -1178,6 +1160,19 @@ if st.session_state.pending_file_text is not None:
     )
 
     st.session_state.pending_file_text = None
+
+
+# =============================================================================
+# SAFE INPUT CLEAR
+# =============================================================================
+
+if st.session_state.clear_input_next_run:
+
+    st.session_state.main_input_box = ""
+
+    st.session_state.input_text = ""
+
+    st.session_state.clear_input_next_run = False
 
 
 # =============================================================================
@@ -1224,6 +1219,10 @@ if audio is not None:
 
     audio_id = f"{audio.name}_{audio.size}"
 
+    # -------------------------------------------------------------------------
+    # Prevent infinite rerun loop
+    # -------------------------------------------------------------------------
+
     if st.session_state.last_audio_id != audio_id:
 
         st.session_state.last_audio_id = audio_id
@@ -1235,9 +1234,9 @@ if audio is not None:
                 file=audio
             )
 
-            # -------------------------------------------------------------
+            # -----------------------------------------------------------------
             # SAFE BUFFER WRITE
-            # -------------------------------------------------------------
+            # -----------------------------------------------------------------
 
             st.session_state.pending_audio_text = (
                 transcript.text
@@ -1265,6 +1264,10 @@ uploaded_file = st.file_uploader(
 if uploaded_file is not None:
 
     file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+
+    # -------------------------------------------------------------------------
+    # Prevent duplicate reruns
+    # -------------------------------------------------------------------------
 
     if st.session_state.last_uploaded_file != file_id:
 
@@ -1443,10 +1446,8 @@ if user_query:
         })
 
     # =========================================================================
-    # CLEAN RESET
+    # SAFE RESET
     # =========================================================================
-
-    st.session_state.main_input_box = ""
 
     st.session_state.input_text = ""
 
@@ -1457,5 +1458,7 @@ if user_query:
     st.session_state.pending_audio_text = None
 
     st.session_state.pending_file_text = None
+
+    st.session_state.clear_input_next_run = True
 
     st.rerun()
