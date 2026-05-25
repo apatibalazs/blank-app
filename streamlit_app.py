@@ -1033,10 +1033,16 @@ if st.session_state.state_history:
 
 # ============================================================
 # INIT MODULE
-# COGNITO RUNTIME SHELL — STABLE MOBILE CORE
-# SIMPLE / STABLE / WORKING
+# COGNITO RUNTIME SHELL — STABLE MOBILE CORE v2
+# WITH:
+# ✔ AUTOSIZE
+# ✔ NATIVE FILE UPLOAD
+# ✔ FLOATING MIC
+# ✔ COPY BUTTON
+# ✔ ENTER SUBMIT
 # ============================================================
 
+import json
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -1125,7 +1131,7 @@ CHAT STYLE
 }
 
 /* =========================================================
-FILE UPLOADER
+NATIVE FILE UPLOADER
 ========================================================= */
 
 [data-testid="stFileUploader"] {
@@ -1287,6 +1293,58 @@ for msg in st.session_state.chat_messages:
 
         st.markdown(msg["content"])
 
+        # ====================================================
+        # COPY BUTTON
+        # ====================================================
+
+        if msg["role"] == "assistant":
+
+            safe_text = json.dumps(
+                msg["content"]
+            )
+
+            components.html(f"""
+
+            <div style="
+                display:flex;
+                justify-content:flex-end;
+                margin-top:8px;
+            ">
+
+            <button
+                onclick='
+                    navigator.clipboard.writeText({safe_text});
+
+                    this.innerText="✅";
+
+                    setTimeout(() => {{
+                        this.innerText="📋";
+                    }},1200);
+                '
+
+                style="
+                    background:
+                        rgba(0,255,255,0.08);
+
+                    border:
+                        1px solid rgba(0,255,255,0.14);
+
+                    color:white;
+
+                    border-radius:10px;
+
+                    padding:6px 10px;
+
+                    cursor:pointer;
+                "
+            >
+                📋
+            </button>
+
+            </div>
+
+            """, height=44)
+
 # ============================================================
 # FRONTEND RUNTIME SHELL
 # ============================================================
@@ -1312,6 +1370,45 @@ WRAP
     width:min(920px,95vw);
 
     z-index:999998;
+}
+
+/* =========================================================
+FLOATING MIC
+========================================================= */
+
+#runtime-mic {
+
+    position:fixed;
+
+    right:18px;
+
+    bottom:96px;
+
+    width:52px;
+
+    height:52px;
+
+    border:none;
+
+    border-radius:999px;
+
+    background:
+        radial-gradient(
+            circle,
+            #222 0%,
+            #050505 100%
+        );
+
+    color:white;
+
+    font-size:22px;
+
+    z-index:999999;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 0 18px rgba(0,0,0,0.35);
 }
 
 /* =========================================================
@@ -1431,6 +1528,17 @@ STATUS
 
 <div id="runtime-shell">
 
+    <!-- FLOATING MIC -->
+
+    <button
+        id="runtime-mic"
+        type="button"
+    >
+        🎤
+    </button>
+
+    <!-- COMPOSER -->
+
     <div id="runtime-composer">
 
         <textarea
@@ -1468,6 +1576,11 @@ const textarea =
 const status =
     document.getElementById(
         "runtime-status"
+    );
+
+const micBtn =
+    document.getElementById(
+        "runtime-mic"
     );
 
 /* =========================================================
@@ -1512,6 +1625,69 @@ textarea.addEventListener(
 requestAnimationFrame(
     autoResize
 );
+
+/* =========================================================
+VOICE ENGINE
+========================================================= */
+
+let recognition = null;
+
+if (
+    "webkitSpeechRecognition"
+    in window
+) {
+
+    recognition =
+        new webkitSpeechRecognition();
+
+    recognition.lang = "hu-HU";
+
+    recognition.continuous = false;
+
+    recognition.interimResults = false;
+
+    recognition.onstart =
+        function() {
+
+        status.innerText =
+            "🎤 figyelek...";
+    };
+
+    recognition.onend =
+        function() {
+
+        status.innerText = "";
+    };
+
+    recognition.onresult =
+        function(event) {
+
+        const text =
+            event.results[0][0]
+            .transcript;
+
+        textarea.value +=
+            " " + text;
+
+        autoResize();
+
+        status.innerText =
+            "🎤 szöveg felismerve";
+
+        setTimeout(() => {
+
+            status.innerText = "";
+
+        }, 1200);
+    };
+}
+
+micBtn.onclick = function() {
+
+    if (!recognition) return;
+
+    recognition.start();
+};
 
 /* =========================================================
 SUBMIT
@@ -1662,7 +1838,7 @@ if submit_hidden and hidden_input:
     # DEMO RESPONSE
     # ========================================================
 
-    response = f"""
+    response = f'''
 
 COGNITO RUNTIME ACTIVE
 
@@ -1670,12 +1846,12 @@ INPUT:
 
 {final_input}
 
-A runtime shell stabilan működik.
-- autosize aktív
-- enter submit aktív
-- natív file upload aktív
+✔ autosize aktív
+✔ natív upload aktív
+✔ floating microphone aktív
+✔ copy button aktív
 
-"""
+'''
 
     st.session_state.chat_messages.append({
 
