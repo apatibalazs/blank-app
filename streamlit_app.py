@@ -1032,16 +1032,18 @@ if st.session_state.state_history:
         )
 
 
-# =============================================================================
+# ============================================================================
 
 # ============================================================
-# COGNITO RUNTIME UI v5
-# CHATGPT-LIKE CYBERPUNK RUNTIME
-# FULL MULTIMODAL + REAL COPY SYSTEM
+# COGNITO RUNTIME UI v6
+# FULL CHATGPT-LIKE CYBERPUNK RUNTIME
+# SINGLE COMPOSER SYSTEM
 # ============================================================
 
 import tempfile
 import hashlib
+import json
+import base64
 
 # ============================================================
 # SESSION STATE INIT
@@ -1059,6 +1061,9 @@ if "last_uploaded_file" not in st.session_state:
 if "last_audio_hash" not in st.session_state:
     st.session_state.last_audio_hash = None
 
+if "composer_text" not in st.session_state:
+    st.session_state.composer_text = ""
+
 # ============================================================
 # CYBERPUNK GLOBAL CSS
 # ============================================================
@@ -1067,11 +1072,19 @@ st.markdown("""
 <style>
 
 /* =========================================================
-MAIN
+GLOBAL
 ========================================================= */
 
 html, body, [class*="css"] {
-    background: #050816;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #09111f 0%,
+            #050816 55%,
+            #02030a 100%
+        );
+
     color: white;
 }
 
@@ -1080,79 +1093,192 @@ CHAT MESSAGE
 ========================================================= */
 
 [data-testid="stChatMessage"] {
+
     border-radius: 18px;
+
     padding: 16px;
-    margin-bottom: 16px;
-    border: 1px solid rgba(0,255,255,0.12);
-    background: rgba(12,18,28,0.72);
-    backdrop-filter: blur(12px);
+
+    margin-bottom: 18px;
+
+    border:
+        1px solid rgba(0,255,255,0.12);
+
+    background:
+        rgba(12,18,28,0.72);
+
+    backdrop-filter:
+        blur(12px);
+
     box-shadow:
         0 0 24px rgba(0,255,255,0.04);
 }
 
 /* =========================================================
-CHAT INPUT CONTAINER
+CHAT INPUT HIDE
 ========================================================= */
 
-.stChatInputContainer {
-    background:
-        linear-gradient(
-            180deg,
-            rgba(10,10,20,0.96),
-            rgba(5,8,18,0.98)
-        );
-    border-top:
-        1px solid rgba(0,255,255,0.12);
-    padding-top: 12px;
+[data-testid="stChatInput"] {
+    display: none;
 }
 
 /* =========================================================
-TEXTAREA
+STREAMLIT BUTTON HIDE
 ========================================================= */
 
-.stChatInput textarea {
-    border-radius: 18px !important;
-    border:
-        1px solid rgba(0,255,255,0.18) !important;
-
-    background:
-        rgba(18,22,32,0.96) !important;
-
-    color: white !important;
-
-    padding-top: 14px !important;
-    padding-bottom: 14px !important;
-
-    font-size: 16px !important;
-
-    box-shadow:
-        0 0 20px rgba(0,255,255,0.05);
+.stButton {
+    display:none;
 }
 
 /* =========================================================
-UPLOAD AREA
+FILE UPLOADER
 ========================================================= */
 
 [data-testid="stFileUploader"] {
+
+    border-radius: 16px;
+
     border:
         1px solid rgba(0,255,255,0.14);
 
-    border-radius: 16px;
-
     background:
-        rgba(10,15,25,0.6);
+        rgba(15,20,35,0.62);
 
-    padding: 12px;
+    padding: 10px;
 }
 
 /* =========================================================
-STATUS BOX
+CUSTOM COMPOSER
 ========================================================= */
 
-[data-testid="stStatusWidget"] {
-    border-radius: 16px;
+.cognito-composer-wrap {
+
+    position: fixed;
+
+    bottom: 18px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: min(920px, 96vw);
+
+    z-index: 99999;
+}
+
+.cognito-composer {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 12px;
+
+    border-radius: 24px;
+
+    border:
+        1px solid rgba(0,255,255,0.14);
+
+    background:
+        rgba(12,18,30,0.88);
+
+    backdrop-filter:
+        blur(16px);
+
+    box-shadow:
+        0 0 32px rgba(0,255,255,0.08);
+}
+
+.cognito-icon-btn {
+
+    width: 42px;
+
+    height: 42px;
+
+    border-radius: 12px;
+
+    border:
+        1px solid rgba(0,255,255,0.12);
+
+    background:
+        rgba(0,255,255,0.05);
+
+    color: white;
+
+    font-size: 18px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.cognito-icon-btn:hover {
+
+    background:
+        rgba(0,255,255,0.14);
+
+    box-shadow:
+        0 0 12px rgba(0,255,255,0.14);
+}
+
+.cognito-input {
+
+    flex: 1;
+
+    border: none;
+
+    outline: none;
+
+    background:
+        rgba(20,25,40,0.92);
+
+    color: white;
+
+    border-radius: 18px;
+
+    padding: 14px 16px;
+
+    font-size: 16px;
+
     border:
         1px solid rgba(0,255,255,0.10);
+}
+
+.cognito-send {
+
+    width: 48px;
+
+    height: 48px;
+
+    border-radius: 16px;
+
+    border: none;
+
+    background:
+        linear-gradient(
+            135deg,
+            #00f5a0,
+            #00bbff
+        );
+
+    color: black;
+
+    font-size: 22px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.cognito-send:hover {
+
+    transform: scale(1.05);
+
+    box-shadow:
+        0 0 18px rgba(0,255,255,0.28);
 }
 
 /* =========================================================
@@ -1176,28 +1302,26 @@ COPY BUTTON
     font-size: 14px;
 
     cursor: pointer;
-
-    transition: all 0.2s ease;
 }
 
-.cognito-copy-btn:hover {
+/* =========================================================
+BOTTOM SPACER
+========================================================= */
 
-    background:
-        rgba(0,255,255,0.16);
+.cognito-bottom-space {
 
-    box-shadow:
-        0 0 12px rgba(0,255,255,0.16);
+    height: 140px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# FILE / IMAGE INPUT
+# FILE INPUT
 # ============================================================
 
 uploaded_file = st.file_uploader(
-    "📎 FILE / IMAGE INPUT",
+    "📎 Upload",
     type=[
         "txt",
         "pdf",
@@ -1205,24 +1329,22 @@ uploaded_file = st.file_uploader(
         "jpg",
         "jpeg"
     ],
-    accept_multiple_files=False,
-    key="cognito_file_upload_v5"
+    key="cognito_upload_v6"
 )
 
 # ============================================================
-# VOICE INPUT
+# AUDIO INPUT
 # ============================================================
 
 audio_file = st.audio_input(
-    "🎤 Voice Input",
-    key="cognito_voice_input_v5"
+    "🎤 Voice",
+    key="cognito_audio_v6"
 )
 
 voice_prompt = ""
 
 # ============================================================
 # AUDIO PROCESSING
-# LOOP SAFE
 # ============================================================
 
 if audio_file is not None:
@@ -1255,8 +1377,8 @@ if audio_file is not None:
 
             voice_prompt = transcript.text
 
-            st.success(
-                "✅ Voice input feldolgozva"
+            st.session_state.composer_text = (
+                voice_prompt
             )
 
 else:
@@ -1265,7 +1387,6 @@ else:
 
 # ============================================================
 # FILE PARSING
-# LOOP SAFE
 # ============================================================
 
 if uploaded_file is not None:
@@ -1348,16 +1469,8 @@ if uploaded_file is not None:
                     "[IMAGE INPUT DETECTED]"
                 )
 
-            # ====================================================
-            # SAVE
-            # ====================================================
-
             st.session_state.parsed_file_content = (
                 parsed_file_content
-            )
-
-            st.success(
-                "✅ Fájl feldolgozva"
             )
 
         except Exception as e:
@@ -1378,8 +1491,6 @@ parsed_file_content = (
 # CHAT HISTORY
 # ============================================================
 
-st.markdown("---")
-
 for idx, msg in enumerate(
     st.session_state.chat_messages
 ):
@@ -1394,33 +1505,31 @@ for idx, msg in enumerate(
         )
 
         # ====================================================
-        # REAL COPY BUTTON
+        # COPY BUTTON
         # ====================================================
 
         if msg["role"] == "assistant":
 
-            safe_out = (
+            safe_out_json = json.dumps(
                 msg["content"]
-                .replace("\\", "\\\\")
-                .replace("`", "\\`")
-                .replace("$", "\\$")
             )
 
             copy_button_html = f"""
             <div style="
-                display:flex;
-                justify-content:flex-end;
-                margin-top:8px;
+            display:flex;
+            justify-content:flex-end;
+            margin-top:10px;
             ">
             <button
             class="cognito-copy-btn"
-            onclick="
-            navigator.clipboard.writeText(`{safe_out}`);
-            this.innerText='✅';
+            onclick='
+            navigator.clipboard.writeText({safe_out_json});
+            this.innerText="✅";
             setTimeout(() => {{
-            this.innerText='📋';
+            this.innerText="📋";
             }}, 1200);
-            ">
+            '
+            >
             📋
             </button>
             </div>
@@ -1432,16 +1541,50 @@ for idx, msg in enumerate(
             )
 
 # ============================================================
-# CHAT INPUT
+# CUSTOM COMPOSER
+# ============================================================
+
+st.markdown(f"""
+<div class="cognito-composer-wrap">
+
+<div class="cognito-composer">
+
+<button class="cognito-icon-btn">
+📎
+</button>
+
+<button class="cognito-icon-btn">
+🎤
+</button>
+
+<input
+class="cognito-input"
+placeholder="Írd be a futtatandó témát..."
+value="{st.session_state.composer_text}"
+/>
+
+<button class="cognito-send">
+➤
+</button>
+
+</div>
+
+</div>
+
+<div class="cognito-bottom-space"></div>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# REAL INPUT
 # ============================================================
 
 prompt = st.chat_input(
     "Írd be a futtatandó témát...",
-    key="cognito_chat_input_v5"
+    key="cognito_hidden_input_v6"
 )
 
 # ============================================================
-# VOICE MERGE
+# VOICE FALLBACK
 # ============================================================
 
 if (
@@ -1458,10 +1601,6 @@ if (
 
 if prompt:
 
-    # ========================================================
-    # FINAL INPUT
-    # ========================================================
-
     final_user_input = prompt
 
     if parsed_file_content:
@@ -1472,7 +1611,7 @@ if prompt:
         )
 
     # ========================================================
-    # SAVE USER MESSAGE
+    # SAVE USER
     # ========================================================
 
     st.session_state.chat_messages.append({
@@ -1584,31 +1723,27 @@ if prompt:
         )
 
         # ====================================================
-        # INLINE COPY BUTTON
+        # COPY BUTTON
         # ====================================================
 
-        safe_out = (
-            out
-            .replace("\\", "\\\\")
-            .replace("`", "\\`")
-            .replace("$", "\\$")
-        )
+        safe_out_json = json.dumps(out)
 
         copy_button_html = f"""
         <div style="
-            display:flex;
-            justify-content:flex-end;
-            margin-top:8px;
+        display:flex;
+        justify-content:flex-end;
+        margin-top:10px;
         ">
         <button
         class="cognito-copy-btn"
-        onclick="
-        navigator.clipboard.writeText(`{safe_out}`);
-        this.innerText='✅';
+        onclick='
+        navigator.clipboard.writeText({safe_out_json});
+        this.innerText="✅";
         setTimeout(() => {{
-        this.innerText='📋';
+        this.innerText="📋";
         }}, 1200);
-        ">
+        '
+        >
         📋
         </button>
         </div>
@@ -1620,7 +1755,7 @@ if prompt:
         )
 
     # ========================================================
-    # SAVE ASSISTANT MESSAGE
+    # SAVE ASSISTANT
     # ========================================================
 
     st.session_state.chat_messages.append({
@@ -1634,6 +1769,8 @@ if prompt:
 
     st.session_state.parsed_file_content = ""
 
+    st.session_state.composer_text = ""
+
     # ========================================================
     # RERUN
     # ========================================================
@@ -1645,5 +1782,5 @@ if prompt:
 # ============================================================
 
 st.caption(
-    "COGNITO ENGINE — Cyberpunk Runtime v5"
-                )
+    "COGNITO ENGINE — Cyberpunk Runtime v6"
+)
