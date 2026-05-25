@@ -1032,12 +1032,13 @@ if st.session_state.state_history:
         )
 
 
-# ============================================================================
+# ========================================================
 
 # ============================================================
 # INIT MODULE
 # RUNTIME INPUT SYSTEM
-# MONOLITH RUNTIME SHELL v17 STABLE
+# COGNITO RUNTIME SHELL v18
+# FINAL MOBILE + SUBMIT FIX
 # ============================================================
 
 import streamlit as st
@@ -1110,7 +1111,7 @@ body,
 }
 
 /* =========================================================
-HIDE STREAMLIT
+HIDE STREAMLIT UI
 ========================================================= */
 
 [data-testid="stTextInput"],
@@ -1118,6 +1119,15 @@ HIDE STREAMLIT
 .stButton,
 button[kind="secondaryFormSubmit"],
 [data-testid="stFormSubmitButton"] {
+
+    display:none !important;
+}
+
+/* =========================================================
+HIDE WHOLE STREAMLIT FORM
+========================================================= */
+
+div[data-testid="stForm"] {
 
     display:none !important;
 }
@@ -1152,7 +1162,7 @@ BOTTOM SPACE
 
 .cog-bottom-space {
 
-    height:120px;
+    height:130px;
 }
 
 </style>
@@ -1285,7 +1295,7 @@ COMPOSER
 
     padding:10px;
 
-    min-height:72px;
+    min-height:76px;
 
     border-radius:26px;
 
@@ -1308,9 +1318,9 @@ BUTTONS
 
 .cog-btn {
 
-    width:48px;
+    width:50px;
 
-    height:48px;
+    height:50px;
 
     border:none;
 
@@ -1348,13 +1358,15 @@ TEXTAREA
 
 #cog-input {
 
-    flex:1 1 auto;
+    flex-grow:1;
 
-    width:100%;
+    flex-shrink:1;
 
-    min-width:0;
+    width:auto;
 
-    min-height:52px;
+    min-width:120px;
+
+    min-height:54px;
 
     max-height:140px;
 
@@ -1393,9 +1405,9 @@ SEND BUTTON
 
 #send-btn {
 
-    width:56px;
+    width:58px;
 
-    height:56px;
+    height:58px;
 
     border:none;
 
@@ -1446,6 +1458,7 @@ SEND BUTTON
         <button
             class="cog-btn"
             id="file-btn"
+            type="button"
         >
             📎
         </button>
@@ -1455,6 +1468,7 @@ SEND BUTTON
         <button
             class="cog-btn"
             id="mic-btn"
+            type="button"
         >
             🎤
         </button>
@@ -1485,7 +1499,7 @@ SEND BUTTON
 <script>
 
 /* =========================================================
-TEXTAREA
+ELEMENTS
 ========================================================= */
 
 const textarea =
@@ -1500,7 +1514,7 @@ AUTOSIZE
 function autoResize() {
 
     textarea.style.height =
-        "52px";
+        "54px";
 
     textarea.style.height =
         Math.min(
@@ -1550,7 +1564,7 @@ document
 };
 
 /* =========================================================
-MIC
+VOICE
 ========================================================= */
 
 let recognition = null;
@@ -1660,7 +1674,7 @@ function submitPrompt() {
     }
 
     /* =====================================================
-    FORCE VALUE SET
+    FORCE VALUE
     ===================================================== */
 
     hiddenInput.value = text;
@@ -1684,7 +1698,7 @@ function submitPrompt() {
     );
 
     /* =====================================================
-    REAL SUBMIT BUTTON
+    REAL STREAMLIT SUBMIT
     ===================================================== */
 
     const submitBtn =
@@ -1697,7 +1711,16 @@ function submitPrompt() {
 
         setTimeout(() => {
 
-            submitBtn.click();
+            submitBtn.dispatchEvent(
+                new MouseEvent(
+                    "click",
+                    {
+                        bubbles:true,
+                        cancelable:true,
+                        view:window
+                    }
+                )
+            );
 
         }, 80);
     }
@@ -1711,7 +1734,7 @@ function submitPrompt() {
         textarea.value = "";
 
         textarea.style.height =
-            "52px";
+            "54px";
 
     }, 800);
 }
@@ -1724,7 +1747,7 @@ document
 .getElementById(
     "send-btn"
 )
-addEventListener(
+.addEventListener(
     "click",
     submitPrompt
 );
@@ -1752,7 +1775,7 @@ textarea.addEventListener(
 
 </script>
 
-""", height=130)
+""", height=140)
 
 # ============================================================
 # EXECUTION ENGINE
