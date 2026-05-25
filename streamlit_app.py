@@ -1033,13 +1033,7 @@ if st.session_state.state_history:
 
 # ============================================================
 # INIT MODULE
-# COGNITO RUNTIME SHELL — STABLE MOBILE CORE v2
-# WITH:
-# ✔ AUTOSIZE
-# ✔ NATIVE FILE UPLOAD
-# ✔ FLOATING MIC
-# ✔ COPY BUTTON
-# ✔ ENTER SUBMIT
+# COGNITO RUNTIME SHELL — FINAL STABLE BUILD
 # ============================================================
 
 import json
@@ -1055,6 +1049,9 @@ if "chat_messages" not in st.session_state:
 
 if "uploaded_text" not in st.session_state:
     st.session_state.uploaded_text = ""
+
+if "show_upload" not in st.session_state:
+    st.session_state.show_upload = False
 
 # ============================================================
 # GLOBAL CSS
@@ -1082,7 +1079,7 @@ body,
 }
 
 /* =========================================================
-HIDE STREAMLIT FORM
+HIDE FORM
 ========================================================= */
 
 div[data-testid="stForm"] {
@@ -1131,46 +1128,32 @@ CHAT STYLE
 }
 
 /* =========================================================
-NATIVE FILE UPLOADER
+UPLOAD PANEL
 ========================================================= */
 
-[data-testid="stFileUploader"] {
+.upload-panel {
 
-    position:fixed !important;
+    position:fixed;
 
-    left:12px !important;
+    left:12px;
 
-    bottom:90px !important;
+    bottom:90px;
 
-    width:140px !important;
+    width:160px;
 
-    z-index:999999 !important;
+    z-index:999999;
 
     background:
-        rgba(8,14,24,0.94) !important;
+        rgba(8,14,24,0.96);
 
     border:
-        1px solid rgba(0,255,255,0.12) !important;
+        1px solid rgba(0,255,255,0.12);
 
-    border-radius:18px !important;
+    border-radius:18px;
 
-    padding:6px !important;
+    padding:8px;
 
-    backdrop-filter:blur(10px);
-}
-
-[data-testid="stFileUploader"] section {
-
-    border:none !important;
-
-    padding:0 !important;
-
-    background:transparent !important;
-}
-
-[data-testid="stFileUploader"] small {
-
-    display:none !important;
+    backdrop-filter:blur(12px);
 }
 
 /* =========================================================
@@ -1186,20 +1169,50 @@ BOTTOM SPACE
 """, unsafe_allow_html=True)
 
 # ============================================================
+# FILE UPLOAD TOGGLE
+# ============================================================
+
+upload_col1, upload_col2 = st.columns([1,20])
+
+with upload_col1:
+
+    if st.button("📎"):
+
+        st.session_state.show_upload = (
+            not st.session_state.show_upload
+        )
+
+# ============================================================
 # FILE UPLOADER
 # ============================================================
 
-uploaded_file = st.file_uploader(
-    "Upload",
-    type=[
-        "txt",
-        "pdf",
-        "png",
-        "jpg",
-        "jpeg"
-    ],
-    label_visibility="collapsed"
-)
+if st.session_state.show_upload:
+
+    st.markdown(
+        '<div class="upload-panel">',
+        unsafe_allow_html=True
+    )
+
+    uploaded_file = st.file_uploader(
+        "Upload",
+        type=[
+            "txt",
+            "pdf",
+            "png",
+            "jpg",
+            "jpeg"
+        ],
+        label_visibility="collapsed"
+    )
+
+    st.markdown(
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+else:
+
+    uploaded_file = None
 
 # ============================================================
 # FILE PARSE
@@ -1257,6 +1270,8 @@ if uploaded_file is not None:
         st.toast(
             f"📎 Feltöltve: {uploaded_file.name}"
         )
+
+        st.session_state.show_upload = False
 
     except Exception as e:
 
@@ -1528,7 +1543,7 @@ STATUS
 
 <div id="runtime-shell">
 
-    <!-- FLOATING MIC -->
+    <!-- MIC -->
 
     <button
         id="runtime-mic"
@@ -1815,7 +1830,10 @@ if submit_hidden and hidden_input:
 
     final_input = hidden_input
 
+    # ========================================================
     # FILE CONTENT APPEND
+    # ========================================================
+
     if st.session_state.uploaded_text:
 
         final_input += (
@@ -1827,7 +1845,10 @@ if submit_hidden and hidden_input:
             st.session_state.uploaded_text
         )
 
+    # ========================================================
     # SAVE USER MSG
+    # ========================================================
+
     st.session_state.chat_messages.append({
 
         "role":"user",
@@ -1835,31 +1856,90 @@ if submit_hidden and hidden_input:
     })
 
     # ========================================================
-    # DEMO RESPONSE
+    # REAL COGNITO EXECUTION
     # ========================================================
 
-    response = f'''
+    with st.status(
+        "⚙️ COGNITO Runtime aktív...",
+        expanded=True
+    ) as runtime_status:
 
-COGNITO RUNTIME ACTIVE
+        pat_data = pat_eng.scan(
+            final_input
+        )
 
-INPUT:
+        new_json, comp_use = (
+            comp.compile_state(
+                final_input,
+                pat_data
+            )
+        )
 
-{final_input}
+        update_cost(
+            comp_use
+        )
 
-✔ autosize aktív
-✔ natív upload aktív
-✔ floating microphone aktív
-✔ copy button aktív
+        st.session_state.state_history = (
+            st_mach.update(
+                st.session_state.state_history,
+                new_json,
+                pat_data["entropy"]
+            )
+        )
 
-'''
+        runtime_status.update(
+            label="✅ Runtime frissítve",
+            state="complete"
+        )
+
+    final_prompt = (
+        WritingEngine.generate_prompt(
+            run_state,
+            run_mode,
+            web_mode,
+            out_format,
+            switches,
+            st.session_state.state_history[-1],
+            pat_data
+        )
+    )
+
+    response = (
+        client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role":"system",
+                    "content":final_prompt
+                },
+                {
+                    "role":"user",
+                    "content":final_input
+                }
+            ]
+        )
+    )
+
+    out = (
+        response
+        .choices[0]
+        .message.content
+    )
+
+    update_cost(
+        response.usage
+    )
 
     st.session_state.chat_messages.append({
 
         "role":"assistant",
-        "content":response
+        "content":out
     })
 
+    # ========================================================
     # RESET FILE CACHE
+    # ========================================================
+
     st.session_state.uploaded_text = ""
 
     st.rerun()
@@ -1869,5 +1949,5 @@ INPUT:
 # ============================================================
 
 st.caption(
-    "COGNITO ENGINE — STABLE MOBILE SHELL"
+    "COGNITO ENGINE PRO 😎"
 )
