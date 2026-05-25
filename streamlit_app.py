@@ -1033,39 +1033,12 @@ if st.session_state.state_history:
 
 # ============================================================
 # INIT MODULE
-# COGNITO RUNTIME SHELL v25
-# CHATGPT-STYLE MULTIMODAL RUNTIME
-# FULL MOBILE UX BUILD
+# COGNITO RUNTIME SHELL — STABLE MOBILE CORE
+# SIMPLE / STABLE / WORKING
 # ============================================================
 
-import json
 import streamlit as st
 import streamlit.components.v1 as components
-
-from openai import OpenAI
-
-# ============================================================
-# ENGINE INIT
-# ============================================================
-
-if "engine_initialized" not in st.session_state:
-
-    st.session_state.client = OpenAI(
-        api_key=st.secrets.get(
-            "OPENAI_API_KEY",
-            ""
-        )
-    )
-
-    st.session_state.pat_eng = PatternEngine()
-
-    st.session_state.comp = MemoryCompiler(
-        st.session_state.client
-    )
-
-    st.session_state.st_mach = StateMachine()
-
-    st.session_state.engine_initialized = True
 
 # ============================================================
 # SESSION STATE
@@ -1074,98 +1047,8 @@ if "engine_initialized" not in st.session_state:
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
 
-if "uploaded_file_text" not in st.session_state:
-    st.session_state.uploaded_file_text = ""
-
-# ============================================================
-# REAL FILE UPLOADER
-# ============================================================
-
-uploaded_file = st.file_uploader(
-    "upload",
-    type=[
-        "txt",
-        "pdf",
-        "png",
-        "jpg",
-        "jpeg"
-    ],
-    label_visibility="collapsed"
-)
-
-# ============================================================
-# FILE PARSER
-# ============================================================
-
-if uploaded_file is not None:
-
-    try:
-
-        file_name = uploaded_file.name.lower()
-
-        # ====================================================
-        # TXT
-        # ====================================================
-
-        if file_name.endswith(".txt"):
-
-            st.session_state.uploaded_file_text = (
-                uploaded_file
-                .read()
-                .decode(
-                    "utf-8",
-                    errors="ignore"
-                )
-            )
-
-        # ====================================================
-        # PDF
-        # ====================================================
-
-        elif file_name.endswith(".pdf"):
-
-            import fitz
-
-            pdf_bytes = uploaded_file.read()
-
-            pdf = fitz.open(
-                stream=pdf_bytes,
-                filetype="pdf"
-            )
-
-            pages = []
-
-            for page in pdf:
-
-                pages.append(
-                    page.get_text()
-                )
-
-            st.session_state.uploaded_file_text = (
-                "\n".join(pages)
-            )
-
-        # ====================================================
-        # IMAGE
-        # ====================================================
-
-        elif (
-            file_name.endswith(".png")
-            or
-            file_name.endswith(".jpg")
-            or
-            file_name.endswith(".jpeg")
-        ):
-
-            st.session_state.uploaded_file_text = (
-                f"[IMAGE INPUT: {uploaded_file.name}]"
-            )
-
-    except Exception as e:
-
-        st.error(
-            f"FILE PARSE ERROR: {e}"
-        )
+if "uploaded_text" not in st.session_state:
+    st.session_state.uploaded_text = ""
 
 # ============================================================
 # GLOBAL CSS
@@ -1185,70 +1068,15 @@ body,
     background:
         radial-gradient(
             circle at top,
-            #081320 0%,
-            #030712 60%,
-            #01040a 100%
+            #07111d 0%,
+            #02050b 100%
         );
 
     color:white;
 }
 
 /* =========================================================
-HIDE STREAMLIT INPUTS
-========================================================= */
-
-[data-testid="stTextInput"],
-[data-testid="stChatInput"],
-.stButton {
-
-    opacity:0 !important;
-
-    height:0 !important;
-
-    overflow:hidden !important;
-}
-
-/* =========================================================
-REAL MOBILE FILE OVERLAY
-========================================================= */
-
-[data-testid="stFileUploader"] {
-
-    position:fixed !important;
-
-    bottom:18px !important;
-
-    left:12px !important;
-
-    width:44px !important;
-
-    height:44px !important;
-
-    opacity:0.01 !important;
-
-    z-index:999999 !important;
-}
-
-/* =========================================================
-KEEP SUBMIT ACTIVE
-========================================================= */
-
-button[kind="secondaryFormSubmit"],
-[data-testid="stFormSubmitButton"] {
-
-    position:absolute !important;
-
-    left:-9999px !important;
-
-    width:1px !important;
-
-    height:1px !important;
-
-    opacity:0.01 !important;
-}
-
-/* =========================================================
-KEEP FORM IN DOM
+HIDE STREAMLIT FORM
 ========================================================= */
 
 div[data-testid="stForm"] {
@@ -1260,21 +1088,32 @@ div[data-testid="stForm"] {
     height:0 !important;
 
     overflow:hidden !important;
-
-    z-index:-1 !important;
 }
 
 /* =========================================================
-CHAT MESSAGE
+HIDDEN SUBMIT
+========================================================= */
+
+button[kind="secondaryFormSubmit"] {
+
+    position:absolute !important;
+
+    left:-9999px !important;
+
+    opacity:0 !important;
+}
+
+/* =========================================================
+CHAT STYLE
 ========================================================= */
 
 [data-testid="stChatMessage"] {
 
     background:
-        rgba(10,18,30,0.72);
+        rgba(12,18,28,0.75);
 
     border:
-        1px solid rgba(0,255,255,0.10);
+        1px solid rgba(0,255,255,0.08);
 
     border-radius:22px;
 
@@ -1282,23 +1121,142 @@ CHAT MESSAGE
 
     margin-bottom:18px;
 
-    backdrop-filter:blur(12px);
+    backdrop-filter:blur(10px);
+}
 
-    box-shadow:
-        0 0 24px rgba(0,255,255,0.04);
+/* =========================================================
+FILE UPLOADER
+========================================================= */
+
+[data-testid="stFileUploader"] {
+
+    position:fixed !important;
+
+    left:12px !important;
+
+    bottom:90px !important;
+
+    width:140px !important;
+
+    z-index:999999 !important;
+
+    background:
+        rgba(8,14,24,0.94) !important;
+
+    border:
+        1px solid rgba(0,255,255,0.12) !important;
+
+    border-radius:18px !important;
+
+    padding:6px !important;
+
+    backdrop-filter:blur(10px);
+}
+
+[data-testid="stFileUploader"] section {
+
+    border:none !important;
+
+    padding:0 !important;
+
+    background:transparent !important;
+}
+
+[data-testid="stFileUploader"] small {
+
+    display:none !important;
 }
 
 /* =========================================================
 BOTTOM SPACE
 ========================================================= */
 
-.cog-bottom-space {
+.runtime-bottom-space {
 
     height:180px;
 }
 
 </style>
 """, unsafe_allow_html=True)
+
+# ============================================================
+# FILE UPLOADER
+# ============================================================
+
+uploaded_file = st.file_uploader(
+    "Upload",
+    type=[
+        "txt",
+        "pdf",
+        "png",
+        "jpg",
+        "jpeg"
+    ],
+    label_visibility="collapsed"
+)
+
+# ============================================================
+# FILE PARSE
+# ============================================================
+
+if uploaded_file is not None:
+
+    try:
+
+        file_name = uploaded_file.name.lower()
+
+        # TXT
+        if file_name.endswith(".txt"):
+
+            st.session_state.uploaded_text = (
+                uploaded_file
+                .read()
+                .decode(
+                    "utf-8",
+                    errors="ignore"
+                )
+            )
+
+        # PDF
+        elif file_name.endswith(".pdf"):
+
+            import fitz
+
+            pdf_bytes = uploaded_file.read()
+
+            pdf = fitz.open(
+                stream=pdf_bytes,
+                filetype="pdf"
+            )
+
+            pages = []
+
+            for page in pdf:
+
+                pages.append(
+                    page.get_text()
+                )
+
+            st.session_state.uploaded_text = (
+                "\n".join(pages)
+            )
+
+        # IMAGE
+        else:
+
+            st.session_state.uploaded_text = (
+                f"[IMAGE FILE: {uploaded_file.name}]"
+            )
+
+        st.toast(
+            f"📎 Feltöltve: {uploaded_file.name}"
+        )
+
+    except Exception as e:
+
+        st.error(
+            f"FILE ERROR: {e}"
+        )
 
 # ============================================================
 # HIDDEN FORM
@@ -1309,7 +1267,7 @@ with st.form(
     clear_on_submit=True
 ):
 
-    hidden_prompt = st.text_input(
+    hidden_input = st.text_input(
         "runtime_hidden_input",
         key="runtime_hidden_input",
         label_visibility="collapsed"
@@ -1325,17 +1283,12 @@ with st.form(
 
 for msg in st.session_state.chat_messages:
 
-    with st.chat_message(
-        msg["role"],
-        avatar="👤" if msg["role"] == "user" else "◼️"
-    ):
+    with st.chat_message(msg["role"]):
 
-        st.markdown(
-            msg["content"]
-        )
+        st.markdown(msg["content"])
 
 # ============================================================
-# FRONTEND SHELL
+# FRONTEND RUNTIME SHELL
 # ============================================================
 
 components.html("""
@@ -1346,17 +1299,17 @@ components.html("""
 WRAP
 ========================================================= */
 
-#cog-wrap {
+#runtime-shell {
 
     position:fixed;
 
     left:50%;
 
-    bottom:10px;
+    bottom:12px;
 
     transform:translateX(-50%);
 
-    width:min(920px,96vw);
+    width:min(920px,95vw);
 
     z-index:999998;
 }
@@ -1365,23 +1318,15 @@ WRAP
 COMPOSER
 ========================================================= */
 
-#cog-composer {
+#runtime-composer {
 
-    width:100%;
+    display:flex;
 
-    display:grid;
+    align-items:flex-end;
 
-    grid-template-columns:
-        44px
-        44px
-        1fr
-        52px;
+    gap:10px;
 
-    align-items:end;
-
-    gap:6px;
-
-    padding:8px;
+    padding:10px;
 
     border-radius:28px;
 
@@ -1389,66 +1334,29 @@ COMPOSER
         rgba(8,14,24,0.96);
 
     border:
-        1px solid rgba(0,255,255,0.14);
+        1px solid rgba(0,255,255,0.10);
 
-    backdrop-filter:
-        blur(18px);
-
-    box-shadow:
-        0 0 30px rgba(0,255,255,0.08);
-
-    box-sizing:border-box;
-}
-
-/* =========================================================
-BLACK FAB
-========================================================= */
-
-.cog-btn {
-
-    width:44px;
-
-    height:44px;
-
-    border:none;
-
-    border-radius:999px;
-
-    background:
-        radial-gradient(
-            circle,
-            #222 0%,
-            #050505 100%
-        );
-
-    border:
-        1px solid rgba(255,255,255,0.08);
-
-    color:white;
-
-    font-size:18px;
-
-    cursor:pointer;
+    backdrop-filter:blur(16px);
 
     box-shadow:
-        0 0 14px rgba(0,0,0,0.35);
+        0 0 24px rgba(0,255,255,0.05);
 }
 
 /* =========================================================
 TEXTAREA
 ========================================================= */
 
-#cog-input {
+#runtime-input {
 
-    display:block;
+    flex:1;
 
-    min-width:0;
-
-    min-height:54px;
+    min-height:56px;
 
     max-height:220px;
 
     resize:none;
+
+    overflow-y:hidden;
 
     border:none;
 
@@ -1459,9 +1367,6 @@ TEXTAREA
     background:
         rgba(18,24,38,0.96);
 
-    border:
-        1px solid rgba(255,255,255,0.08);
-
     color:white;
 
     font-size:18px;
@@ -1470,8 +1375,6 @@ TEXTAREA
 
     padding:14px 16px;
 
-    overflow-y:hidden;
-
     box-sizing:border-box;
 }
 
@@ -1479,11 +1382,11 @@ TEXTAREA
 SEND BUTTON
 ========================================================= */
 
-#send-btn {
+#runtime-send {
 
-    width:52px;
+    width:58px;
 
-    height:52px;
+    height:58px;
 
     border:none;
 
@@ -1498,14 +1401,13 @@ SEND BUTTON
 
     color:black;
 
-    font-size:22px;
+    font-size:24px;
 
     font-weight:bold;
 
     cursor:pointer;
 
-    box-shadow:
-        0 0 18px rgba(0,255,200,0.25);
+    flex-shrink:0;
 }
 
 /* =========================================================
@@ -1520,100 +1422,25 @@ STATUS
 
     padding-left:8px;
 
-    min-height:18px;
-
-    opacity:0.8;
-
     margin-top:6px;
-}
 
-/* =========================================================
-WAVEFORM
-========================================================= */
-
-#waveform {
-
-    display:none;
-
-    align-items:center;
-
-    gap:3px;
-
-    height:26px;
-
-    padding-left:8px;
-}
-
-#waveform span {
-
-    width:4px;
-
-    height:10px;
-
-    border-radius:999px;
-
-    background:#00ffd0;
-
-    animation:wave 1s infinite ease-in-out;
-}
-
-#waveform span:nth-child(2) {
-    animation-delay:0.15s;
-}
-
-#waveform span:nth-child(3) {
-    animation-delay:0.30s;
-}
-
-#waveform span:nth-child(4) {
-    animation-delay:0.45s;
-}
-
-@keyframes wave {
-
-    0%   { height:8px; opacity:0.5; }
-    50%  { height:28px; opacity:1; }
-    100% { height:8px; opacity:0.5; }
+    min-height:16px;
 }
 
 </style>
 
-<div id="cog-wrap">
+<div id="runtime-shell">
 
-    <div id="cog-composer">
-
-        <!-- FILE -->
-
-        <button
-            class="cog-btn"
-            id="upload-btn"
-            type="button"
-        >
-            ⬤
-        </button>
-
-        <!-- MIC -->
-
-        <button
-            class="cog-btn"
-            id="mic-btn"
-            type="button"
-        >
-            🎤
-        </button>
-
-        <!-- TEXTAREA -->
+    <div id="runtime-composer">
 
         <textarea
-            id="cog-input"
+            id="runtime-input"
             rows="1"
             placeholder="Írj valamit..."
         ></textarea>
 
-        <!-- SEND -->
-
         <button
-            id="send-btn"
+            id="runtime-send"
             type="button"
         >
             ➤
@@ -1621,24 +1448,11 @@ WAVEFORM
 
     </div>
 
-    <!-- STATUS -->
-
     <div id="runtime-status"></div>
-
-    <!-- WAVEFORM -->
-
-    <div id="waveform">
-
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-
-    </div>
 
 </div>
 
-<div class="cog-bottom-space"></div>
+<div class="runtime-bottom-space"></div>
 
 <script>
 
@@ -1648,62 +1462,13 @@ ELEMENTS
 
 const textarea =
     document.getElementById(
-        "cog-input"
+        "runtime-input"
     );
 
 const status =
     document.getElementById(
         "runtime-status"
     );
-
-const waveform =
-    document.getElementById(
-        "waveform"
-    );
-
-const micBtn =
-    document.getElementById(
-        "mic-btn"
-    );
-
-/* =========================================================
-STATE
-========================================================= */
-
-function setState(state) {
-
-    if (state === "listening") {
-
-        waveform.style.display =
-            "flex";
-
-        status.innerText =
-            "🎤 figyelek...";
-
-        micBtn.innerHTML = "■";
-    }
-
-    else if (state === "processing") {
-
-        waveform.style.display =
-            "none";
-
-        status.innerText =
-            "⚙️ feldolgozás...";
-
-        micBtn.innerHTML = "🎤";
-    }
-
-    else {
-
-        waveform.style.display =
-            "none";
-
-        status.innerText = "";
-
-        micBtn.innerHTML = "🎤";
-    }
-}
 
 /* =========================================================
 AUTOSIZE
@@ -1714,22 +1479,19 @@ function autoResize() {
     textarea.style.height =
         "auto";
 
-    requestAnimationFrame(() => {
+    const nextHeight =
+        Math.min(
+            textarea.scrollHeight,
+            220
+        );
 
-        const nextHeight =
-            Math.min(
-                textarea.scrollHeight,
-                220
-            );
+    textarea.style.height =
+        nextHeight + "px";
 
-        textarea.style.height =
-            nextHeight + "px";
-
-        textarea.style.overflowY =
-            textarea.scrollHeight > 220
-            ? "auto"
-            : "hidden";
-    });
+    textarea.style.overflowY =
+        textarea.scrollHeight > 220
+        ? "auto"
+        : "hidden";
 }
 
 textarea.addEventListener(
@@ -1737,102 +1499,19 @@ textarea.addEventListener(
     autoResize
 );
 
+textarea.addEventListener(
+    "keydown",
+    () => {
+
+        requestAnimationFrame(
+            autoResize
+        );
+    }
+);
+
 requestAnimationFrame(
     autoResize
 );
-
-/* =========================================================
-VOICE
-========================================================= */
-
-let recognition = null;
-
-if (
-    "webkitSpeechRecognition"
-    in window
-) {
-
-    recognition =
-        new webkitSpeechRecognition();
-
-    recognition.lang = "hu-HU";
-
-    recognition.continuous = false;
-
-    recognition.interimResults = false;
-
-    recognition.onstart =
-        function() {
-
-        setState("listening");
-    };
-
-    recognition.onend =
-        function() {
-
-        setState("idle");
-    };
-
-    recognition.onresult =
-        function(event) {
-
-        const text =
-            event.results[0][0]
-            .transcript;
-
-        textarea.value +=
-            " " + text;
-
-        autoResize();
-
-        setState("processing");
-
-        setTimeout(() => {
-
-            setState("idle");
-
-        }, 900);
-    };
-}
-
-document
-.getElementById(
-    "mic-btn"
-)
-.onclick = function() {
-
-    if (!recognition) return;
-
-    recognition.start();
-};
-
-/* =========================================================
-UPLOAD STATUS
-========================================================= */
-
-const uploadInput =
-    window.parent.document
-    .querySelector(
-        'input[type="file"]'
-    );
-
-if (uploadInput) {
-
-    uploadInput.addEventListener(
-        "change",
-        () => {
-
-            status.innerText =
-                "📎 fájl feltöltve";
-
-            setTimeout(() => {
-
-                status.innerText = "";
-
-            }, 1600);
-        }
-    );
-}
 
 /* =========================================================
 SUBMIT
@@ -1845,7 +1524,8 @@ function submitPrompt() {
 
     if (!text) return;
 
-    setState("processing");
+    status.innerText =
+        "⚙️ futtatás...";
 
     const hiddenInput =
         window.parent.document
@@ -1856,7 +1536,7 @@ function submitPrompt() {
     if (!hiddenInput) {
 
         console.error(
-            "Hidden input missing"
+            "hidden input missing"
         );
 
         return;
@@ -1899,11 +1579,7 @@ function submitPrompt() {
 
     if (submitBtn) {
 
-        setTimeout(() => {
-
-            submitBtn.click();
-
-        }, 80);
+        submitBtn.click();
     }
 
     setTimeout(() => {
@@ -1911,15 +1587,13 @@ function submitPrompt() {
         textarea.value = "";
 
         textarea.style.height =
-            "54px";
+            "56px";
 
-        setState("idle");
+        status.innerText = "";
 
-        requestAnimationFrame(
-            autoResize
-        );
+        autoResize();
 
-    }, 700);
+    }, 500);
 }
 
 /* =========================================================
@@ -1928,7 +1602,7 @@ SEND BUTTON
 
 document
 .getElementById(
-    "send-btn"
+    "runtime-send"
 )
 .onclick = submitPrompt;
 
@@ -1955,116 +1629,62 @@ textarea.addEventListener(
 
 </script>
 
-""", height=220)
+""", height=170)
 
 # ============================================================
-# EXECUTION ENGINE
+# EXECUTION
 # ============================================================
 
-if submit_hidden and hidden_prompt:
+if submit_hidden and hidden_input:
 
-    final_input = hidden_prompt
+    final_input = hidden_input
 
-    if st.session_state.uploaded_file_text:
+    # FILE CONTENT APPEND
+    if st.session_state.uploaded_text:
 
         final_input += (
-            "\n\n[UPLOADED FILE CONTENT]\n\n"
+
+            "\n\n[UPLOADED CONTENT]\n\n"
+
             +
-            st.session_state.uploaded_file_text
+
+            st.session_state.uploaded_text
         )
 
+    # SAVE USER MSG
     st.session_state.chat_messages.append({
+
         "role":"user",
         "content":final_input
     })
 
-    with st.status(
-        "⚙️ COGNITO Runtime aktív...",
-        expanded=True
-    ) as status:
+    # ========================================================
+    # DEMO RESPONSE
+    # ========================================================
 
-        pat_data = (
-            st.session_state
-            .pat_eng
-            .scan(final_input)
-        )
+    response = f"""
 
-        new_json, comp_use = (
-            st.session_state
-            .comp
-            .compile_state(
-                final_input,
-                pat_data
-            )
-        )
+COGNITO RUNTIME ACTIVE
 
-        update_cost(
-            comp_use
-        )
+INPUT:
 
-        st.session_state.state_history = (
-            st.session_state
-            .st_mach
-            .update(
-                st.session_state.state_history,
-                new_json,
-                pat_data["entropy"]
-            )
-        )
+{final_input}
 
-        status.update(
-            label="✅ Runtime frissítve",
-            state="complete"
-        )
+A runtime shell stabilan működik.
+- autosize aktív
+- enter submit aktív
+- natív file upload aktív
 
-    final_prompt = (
-        WritingEngine.generate_prompt(
-            run_state,
-            run_mode,
-            web_mode,
-            out_format,
-            switches,
-            st.session_state.state_history[-1],
-            pat_data
-        )
-    )
-
-    response = (
-        st.session_state
-        .client
-        .chat
-        .completions
-        .create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role":"system",
-                    "content":final_prompt
-                },
-                {
-                    "role":"user",
-                    "content":final_input
-                }
-            ]
-        )
-    )
-
-    out = (
-        response
-        .choices[0]
-        .message.content
-    )
-
-    update_cost(
-        response.usage
-    )
+"""
 
     st.session_state.chat_messages.append({
+
         "role":"assistant",
-        "content":out
+        "content":response
     })
 
-    st.session_state.uploaded_file_text = ""
+    # RESET FILE CACHE
+    st.session_state.uploaded_text = ""
 
     st.rerun()
 
@@ -2073,5 +1693,5 @@ if submit_hidden and hidden_prompt:
 # ============================================================
 
 st.caption(
-    "COGNITO ENGINE 17.0 PRO 😎"
+    "COGNITO ENGINE — STABLE MOBILE SHELL"
 )
