@@ -1037,7 +1037,7 @@ if st.session_state.state_history:
 # ============================================================
 # INIT MODULE
 # RUNTIME INPUT SYSTEM
-# MONOLITH RUNTIME SHELL v16 FINAL UI FIX
+# MONOLITH RUNTIME SHELL v17 STABLE
 # ============================================================
 
 import streamlit as st
@@ -1110,25 +1110,13 @@ body,
 }
 
 /* =========================================================
-HIDE STREAMLIT INPUTS
+HIDE STREAMLIT
 ========================================================= */
 
 [data-testid="stTextInput"],
 [data-testid="stChatInput"],
-.stButton {
-
-    display:none !important;
-}
-
-/* =========================================================
-HIDE STREAMLIT FORM BUTTON
-========================================================= */
-
-button[kind="secondaryFormSubmit"] {
-
-    display:none !important;
-}
-
+.stButton,
+button[kind="secondaryFormSubmit"],
 [data-testid="stFormSubmitButton"] {
 
     display:none !important;
@@ -1171,7 +1159,7 @@ BOTTOM SPACE
 """, unsafe_allow_html=True)
 
 # ============================================================
-# HIDDEN FORM BRIDGE
+# HIDDEN FORM
 # ============================================================
 
 with st.form(
@@ -1291,11 +1279,13 @@ COMPOSER
 
     display:flex;
 
-    align-items:flex-end;
+    align-items:center;
 
     gap:10px;
 
     padding:10px;
+
+    min-height:72px;
 
     border-radius:26px;
 
@@ -1358,7 +1348,11 @@ TEXTAREA
 
 #cog-input {
 
-    flex:1;
+    flex:1 1 auto;
+
+    width:100%;
+
+    min-width:0;
 
     min-height:52px;
 
@@ -1389,6 +1383,8 @@ TEXTAREA
     overflow-y:auto;
 
     box-sizing:border-box;
+
+    display:block;
 }
 
 /* =========================================================
@@ -1475,6 +1471,7 @@ SEND BUTTON
 
         <button
             id="send-btn"
+            type="button"
         >
             ➤
         </button>
@@ -1662,16 +1659,11 @@ function submitPrompt() {
         return;
     }
 
-    const nativeSetter =
-        Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype,
-            "value"
-        ).set;
+    /* =====================================================
+    FORCE VALUE SET
+    ===================================================== */
 
-    nativeSetter.call(
-        hiddenInput,
-        text
-    );
+    hiddenInput.value = text;
 
     hiddenInput.dispatchEvent(
         new Event(
@@ -1682,21 +1674,33 @@ function submitPrompt() {
         )
     );
 
+    hiddenInput.dispatchEvent(
+        new Event(
+            "change",
+            {
+                bubbles:true
+            }
+        )
+    );
+
     /* =====================================================
-    FORM SUBMIT
+    REAL SUBMIT BUTTON
     ===================================================== */
 
-    const form =
-        hiddenInput.closest("form");
+    const submitBtn =
+        window.parent.document
+        .querySelector(
+            'button[kind="secondaryFormSubmit"]'
+        );
 
-    setTimeout(() => {
+    if (submitBtn) {
 
-        if (form) {
+        setTimeout(() => {
 
-            form.requestSubmit();
-        }
+            submitBtn.click();
 
-    }, 120);
+        }, 80);
+    }
 
     /* =====================================================
     CLEAR
@@ -1720,7 +1724,10 @@ document
 .getElementById(
     "send-btn"
 )
-.onclick = submitPrompt;
+addEventListener(
+    "click",
+    submitPrompt
+);
 
 /* =========================================================
 ENTER
