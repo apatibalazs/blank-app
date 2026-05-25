@@ -1037,7 +1037,7 @@ if st.session_state.state_history:
 # ============================================================
 # INIT MODULE
 # RUNTIME INPUT SYSTEM
-# MONOLITH RUNTIME SHELL v11
+# MONOLITH RUNTIME SHELL v13 STABLE
 # ============================================================
 
 import streamlit as st
@@ -1045,12 +1045,56 @@ import streamlit.components.v1 as components
 
 import json
 
+from openai import OpenAI
+
+# ============================================================
+# ENGINE INITIALIZATION
+# PERSISTENT RUNTIME OBJECTS
+# ============================================================
+
+if "engine_initialized" not in st.session_state:
+
+    # ========================================================
+    # OPENAI CLIENT
+    # ========================================================
+
+    st.session_state.client = OpenAI(
+        api_key=OPENAI_API_KEY
+    )
+
+    # ========================================================
+    # CORE ENGINES
+    # ========================================================
+
+    st.session_state.pat_eng = (
+        PatternEngine()
+    )
+
+    st.session_state.comp = (
+        MemoryCompiler(
+            st.session_state.client
+        )
+    )
+
+    st.session_state.st_mach = (
+        StateMachine()
+    )
+
+    # ========================================================
+    # INIT FLAG
+    # ========================================================
+
+    st.session_state.engine_initialized = True
+
 # ============================================================
 # SESSION STATE
 # ============================================================
 
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
+
+if "runtime_input_cache" not in st.session_state:
+    st.session_state.runtime_input_cache = ""
 
 # ============================================================
 # GLOBAL CSS
@@ -1079,7 +1123,7 @@ body,
 }
 
 /* =========================================================
-HIDE GHOST WIDGETS
+HIDE STREAMLIT INPUTS
 ========================================================= */
 
 [data-testid="stTextInput"],
@@ -1126,14 +1170,23 @@ BOTTOM SPACE
 """, unsafe_allow_html=True)
 
 # ============================================================
-# HIDDEN BRIDGE
+# HIDDEN RUNTIME BRIDGE
 # ============================================================
 
-hidden_prompt = st.text_input(
-    "runtime_hidden_input",
-    key="runtime_hidden_input",
-    label_visibility="collapsed"
-)
+with st.form(
+    key="runtime_form",
+    clear_on_submit=True
+):
+
+    hidden_prompt = st.text_input(
+        "runtime_hidden_input",
+        key="runtime_hidden_input",
+        label_visibility="collapsed"
+    )
+
+    submit_hidden = st.form_submit_button(
+        "submit"
+    )
 
 # ============================================================
 # CHAT HISTORY
@@ -1295,7 +1348,7 @@ BUTTONS
         rgba(0,255,255,0.16);
 
     box-shadow:
-        0 0 12px rgba(0,255,255,0.22);
+        0 0 12px rgba(0,255,255,0.24);
 }
 
 /* =========================================================
@@ -1377,44 +1430,6 @@ SEND BUTTON
         0 0 18px rgba(0,255,255,0.24);
 }
 
-/* =========================================================
-MOBILE
-========================================================= */
-
-@media (max-width:768px) {
-
-    #cog-wrap {
-
-        width:98vw;
-        bottom:4px;
-    }
-
-    #cog-composer {
-
-        padding:6px;
-        gap:6px;
-    }
-
-    .cog-btn {
-
-        width:38px;
-        height:38px;
-        font-size:16px;
-    }
-
-    #send-btn {
-
-        width:42px;
-        height:42px;
-    }
-
-    #cog-input {
-
-        font-size:14px;
-        padding:10px 12px;
-    }
-}
-
 </style>
 
 <div id="cog-wrap">
@@ -1450,7 +1465,7 @@ MOBILE
         <textarea
             id="cog-input"
             rows="1"
-            placeholder="Írd be a futtatandó témát..."
+            placeholder=""
         ></textarea>
 
         <!-- SEND -->
@@ -1497,6 +1512,28 @@ function autoResize() {
 textarea.addEventListener(
     "input",
     autoResize
+);
+
+/* =========================================================
+DELETE / BACKSPACE FIX
+========================================================= */
+
+textarea.addEventListener(
+    "keydown",
+    (e) => {
+
+        if (
+            e.key === "Backspace"
+            ||
+            e.key === "Delete"
+        ) {
+
+            setTimeout(
+                autoResize,
+                0
+            );
+        }
+    }
 );
 
 /* =========================================================
@@ -1646,17 +1683,21 @@ function submitPrompt() {
         )
     );
 
-    hiddenInput.dispatchEvent(
-        new KeyboardEvent(
-            "keydown",
-            {
-                bubbles:true,
-                cancelable:true,
-                key:"Enter",
-                code:"Enter"
-            }
-        )
-    );
+    /* =====================================================
+    REAL FORM SUBMIT
+    ===================================================== */
+
+    const form =
+        hiddenInput.closest("form");
+
+    if (form) {
+
+        form.requestSubmit();
+    }
+
+    /* =====================================================
+    DELAYED CLEAR
+    ===================================================== */
 
     setTimeout(() => {
 
@@ -1665,7 +1706,7 @@ function submitPrompt() {
         textarea.style.height =
             "auto";
 
-    }, 120);
+    }, 400);
 }
 
 /* =========================================================
@@ -1707,7 +1748,7 @@ textarea.addEventListener(
 # EXECUTION ENGINE
 # ============================================================
 
-if hidden_prompt:
+if submit_hidden and hidden_prompt:
 
     final_input = hidden_prompt
 
@@ -1729,12 +1770,16 @@ if hidden_prompt:
         expanded=True
     ) as status:
 
-        pat_data = pat_eng.scan(
-            final_input
+        pat_data = (
+            st.session_state
+            .pat_eng
+            .scan(final_input)
         )
 
         new_json, comp_use = (
-            comp.compile_state(
+            st.session_state
+            .comp
+            .compile_state(
                 final_input,
                 pat_data
             )
@@ -1745,7 +1790,9 @@ if hidden_prompt:
         )
 
         st.session_state.state_history = (
-            st_mach.update(
+            st.session_state
+            .st_mach
+            .update(
                 st.session_state.state_history,
                 new_json,
                 pat_data["entropy"]
@@ -1778,7 +1825,11 @@ if hidden_prompt:
     # ========================================================
 
     response = (
-        client.chat.completions.create(
+        st.session_state
+        .client
+        .chat
+        .completions
+        .create(
             model="gpt-4o",
             messages=[
                 {
@@ -1811,12 +1862,6 @@ if hidden_prompt:
         "role":"assistant",
         "content":out
     })
-
-    # ========================================================
-    # CLEAR INPUT
-    # ========================================================
-
-    st.session_state.runtime_hidden_input = ""
 
     st.rerun()
 
