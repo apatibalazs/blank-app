@@ -1034,423 +1034,161 @@ if st.session_state.state_history:
 
 # =============================================================================
 
-# =============================================================================
-# INPUT
-# =============================================================================
+# ============================================================
+# MULTIMODAL INPUT + CHATGPT STYLE RUNTIME UI
+# COGNITO RUNTIME UI v2
+# ============================================================
 
-import tempfile
-
-user_query = None
-is_init = False
-
-# =============================================================================
-# FILE UPLOADER
-# REAL MULTIMODAL VERSION
-# =============================================================================
+# ============================================================
+# FILE / IMAGE INPUT
+# ============================================================
 
 uploaded_file = st.file_uploader(
     "📎 FILE / IMAGE INPUT",
-    type=[
-        "txt",
-        "pdf",
-        "png",
-        "jpg",
-        "jpeg"
-    ],
-    key="main_file_upload"
+    type=["txt", "pdf", "png", "jpg", "jpeg"],
+    accept_multiple_files=False,
+    key="cognito_file_upload_v2"
 )
+
+# ============================================================
+# VOICE INPUT
+# ============================================================
+
+st.markdown("### 🎤 Voice Input")
+
+audio_file = st.audio_input(
+    "Voice prompt",
+    key="cognito_voice_input_v2"
+)
+
+voice_prompt = ""
+
+if audio_file is not None:
+
+    with st.spinner("🎧 Audio feldolgozás..."):
+
+        transcript = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file
+        )
+
+        voice_prompt = transcript.text
+
+        st.success("✅ Voice input feldolgozva")
+
+# ============================================================
+# FILE CONTENT PARSING
+# ============================================================
+
+parsed_file_content = ""
 
 if uploaded_file is not None:
 
-    file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+    file_name = uploaded_file.name.lower()
 
-    if st.session_state.last_uploaded_file != file_id:
+    try:
 
-        st.session_state.last_uploaded_file = file_id
-
-        st.success(
-            f"✅ Feltöltve: {uploaded_file.name}"
-        )
-
-        # ================================================================
+        # ====================================================
         # TXT
-        # ================================================================
+        # ====================================================
 
-        if uploaded_file.type == "text/plain":
+        if file_name.endswith(".txt"):
 
-            file_text = uploaded_file.read().decode(
-                "utf-8"
+            parsed_file_content = uploaded_file.read().decode(
+                "utf-8",
+                errors="ignore"
             )
 
-            st.session_state.pending_file_text = f"""
-
---- TXT FILE START ---
-
-{file_text}
-
---- TXT FILE END ---
-"""
-
-            st.rerun()
-
-        # ================================================================
+        # ====================================================
         # PDF
-        # ================================================================
+        # ====================================================
 
-        elif uploaded_file.type == "application/pdf":
+        elif file_name.endswith(".pdf"):
 
-            pdf_text = ""
+            import fitz
+
+            pdf_bytes = uploaded_file.read()
 
             pdf = fitz.open(
-                stream=uploaded_file.read(),
+                stream=pdf_bytes,
                 filetype="pdf"
             )
 
+            pages = []
+
             for page in pdf:
+                pages.append(page.get_text())
 
-                pdf_text += page.get_text()
+            parsed_file_content = "\n".join(pages)
 
-            st.session_state.pending_file_text = f"""
-
---- PDF FILE START ---
-
-{pdf_text}
-
---- PDF FILE END ---
-"""
-
-            st.rerun()
-
-        # ================================================================
+        # ====================================================
         # IMAGE
-        # ================================================================
+        # ====================================================
 
-        elif uploaded_file.type.startswith("image/"):
+        elif (
+            file_name.endswith(".png")
+            or file_name.endswith(".jpg")
+            or file_name.endswith(".jpeg")
+        ):
 
             st.image(
                 uploaded_file,
                 use_container_width=True
             )
 
-            image_bytes = uploaded_file.read()
-
-            base64_image = base64.b64encode(
-                image_bytes
-            ).decode("utf-8")
-
-            vision_response = client.chat.completions.create(
-
-                model="gpt-4o",
-
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-
-                            {
-                                "type": "text",
-                                "text": "Elemezd részletesen ezt a képet."
-                            },
-
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{base64_image}"
-                                }
-                            }
-                        ]
-                    }
-                ]
-
+            parsed_file_content = (
+                "[IMAGE INPUT DETECTED]"
             )
 
-            image_analysis = (
-                vision_response
-                .choices[0]
-                .message
-                .content
-            )
+        st.success("✅ Fájl feldolgozva")
 
-            st.session_state.pending_file_text = f"""
+    except Exception as e:
 
---- IMAGE ANALYSIS START ---
-
-{image_analysis}
-
---- IMAGE ANALYSIS END ---
-"""
-
-            st.rerun()
-
-# =============================================================================
-# INPUT + EXECUTION RUNTIME
-# FULL STABLE VERSION
-# =============================================================================
-
-user_query = None
-
-# =============================================================================
-# SESSION STATE
-# =============================================================================
-
-if "main_input_box" not in st.session_state:
-    st.session_state.main_input_box = ""
-
-if "input_text" not in st.session_state:
-    st.session_state.input_text = ""
-
-if "last_audio_id" not in st.session_state:
-    st.session_state.last_audio_id = None
-
-if "last_uploaded_file" not in st.session_state:
-    st.session_state.last_uploaded_file = None
-
-# -----------------------------------------------------------------------------
-# SAFE BUFFERS
-# -----------------------------------------------------------------------------
-
-if "pending_audio_text" not in st.session_state:
-    st.session_state.pending_audio_text = None
-
-if "pending_file_text" not in st.session_state:
-    st.session_state.pending_file_text = None
-
-if "clear_input_next_run" not in st.session_state:
-    st.session_state.clear_input_next_run = False
-
-
-# =============================================================================
-# APPLY PENDING AUDIO BUFFER
-# =============================================================================
-
-if st.session_state.pending_audio_text is not None:
-
-    st.session_state.main_input_box = (
-        st.session_state.pending_audio_text
-    )
-
-    st.session_state.input_text = (
-        st.session_state.pending_audio_text
-    )
-
-    st.session_state.pending_audio_text = None
-
-
-# =============================================================================
-# APPLY PENDING FILE BUFFER
-# =============================================================================
-
-if st.session_state.pending_file_text is not None:
-
-    st.session_state.main_input_box += (
-        st.session_state.pending_file_text
-    )
-
-    st.session_state.input_text = (
-        st.session_state.main_input_box
-    )
-
-    st.session_state.pending_file_text = None
-
-
-# =============================================================================
-# SAFE INPUT CLEAR
-# =============================================================================
-
-if st.session_state.clear_input_next_run:
-
-    st.session_state.main_input_box = ""
-
-    st.session_state.input_text = ""
-
-    st.session_state.clear_input_next_run = False
-
-
-# =============================================================================
-# CHAT HISTORY
-# =============================================================================
-
-if st.session_state.chat_messages:
-
-    for msg in st.session_state.chat_messages:
-
-        with st.chat_message(
-            msg["role"],
-            avatar="⬛" if msg["role"] == "assistant" else "👤"
-        ):
-
-            st.markdown(msg["content"])
-
-
-# =============================================================================
-# MAIN INPUT FIELD
-# =============================================================================
-
-st.text_area(
-    "RENDSZER-INPUT",
-    height=180,
-    key="main_input_box"
-)
-
-st.session_state.input_text = (
-    st.session_state.main_input_box
-)
-
-
-# =============================================================================
-# AUDIO INPUT
-# =============================================================================
-
-audio = st.audio_input(
-    "🎤 Voice Input",
-    key="main_audio_input"
-)
-
-if audio is not None:
-
-    audio_id = f"{audio.name}_{audio.size}"
-
-    # -------------------------------------------------------------------------
-    # Prevent infinite rerun loop
-    # -------------------------------------------------------------------------
-
-    if st.session_state.last_audio_id != audio_id:
-
-        st.session_state.last_audio_id = audio_id
-
-        with st.spinner("🎧 Audio feldolgozás..."):
-
-            transcript = client.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio
-            )
-
-            # -----------------------------------------------------------------
-            # SAFE BUFFER WRITE
-            # -----------------------------------------------------------------
-
-            st.session_state.pending_audio_text = (
-                transcript.text
-            )
-
-        st.rerun()
-
-
-user_query = st.session_state.input_text.strip() 
+        st.error(f"File parse error: {e}")
 
 # ============================================================
-# EXECUTION BUTTON
-# ============================================================
-
-execute_clicked = st.button(
-    "⚡ EXECUTE COGNITIVE PIPELINE",
-    key="main_execute_button",
-    use_container_width=True
-)
-
-# ============================================================
-# EXECUTION ENGINE
-# ============================================================
-
-if execute_clicked:
-
-    if st.session_state.input_text.strip():
-
-        user_query = st.session_state.input_text
-
-        # SAVE USER MESSAGE
-
-        st.session_state.chat_messages.append({
-            "role": "user",
-            "content": user_query
-        })
-
-        # COGNITIVE STATUS
-
-        with st.status(
-            "⚙️ Kognitív Reaktor Fut...",
-            expanded=True
-        ) as status:
-
-            pat_data = pat_eng.scan(
-                user_query
-            )
-
-            new_json, comp_use = comp.compile_state(
-                user_query,
-                pat_data
-            )
-
-            update_cost(comp_use)
-
-            st.session_state.state_history = (
-                st_mach.update(
-                    st.session_state.state_history,
-                    new_json,
-                    pat_data["entropy"]
-                )
-            )
-
-            status.update(
-                label="✅ OMNI Dekódolás kész.",
-                state="complete"
-            )
-
-        # PROMPT BUILD
-
-        prompt = WritingEngine.generate_prompt(
-            run_state,
-            run_mode,
-            web_mode,
-            out_format,
-            switches,
-            st.session_state.state_history[-1],
-            pat_data
-        )
-
-        # MODEL EXECUTION
-
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "system",
-                    "content": prompt
-                },
-                {
-                    "role": "user",
-                    "content": user_query
-                }
-            ]
-        )
-
-        out = response.choices[0].message.content
-
-        update_cost(response.usage)
-
-        # SAVE ASSISTANT MESSAGE
-
-        st.session_state.chat_messages.append({
-            "role": "assistant",
-           "content": out
-        })
-
-        # CLEAR INPUT
-
-        st.session_state.input_text = ""
-
-   # ============================================================
-# CHAT RUNTIME UI
+# SESSION STATE INIT
 # ============================================================
 
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
 
-st.markdown("---")
+# ============================================================
+# CYBERPUNK CHAT CSS
+# ============================================================
+
+st.markdown("""
+<style>
+
+[data-testid="stChatMessage"] {
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(0,255,200,0.15);
+    background: rgba(15,15,25,0.65);
+    backdrop-filter: blur(10px);
+}
+
+.stChatInputContainer {
+    background: rgba(10,10,20,0.88);
+    border-top: 1px solid rgba(0,255,255,0.18);
+}
+
+.stChatInput textarea {
+    border-radius: 18px !important;
+    border: 1px solid rgba(0,255,255,0.2) !important;
+    background: rgba(20,20,30,0.9) !important;
+    color: white !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 # ============================================================
 # CHAT HISTORY
 # ============================================================
+
+st.markdown("---")
 
 for idx, msg in enumerate(st.session_state.chat_messages):
 
@@ -1462,60 +1200,81 @@ for idx, msg in enumerate(st.session_state.chat_messages):
         st.markdown(msg["content"])
 
         # ====================================================
-        # COPY BUTTON
+        # COPYABLE OUTPUT
         # ====================================================
 
         if msg["role"] == "assistant":
 
-            st.code(
-                msg["content"],
-                language=None
-            )
+            with st.expander("📋 Copy Output"):
+
+                st.code(
+                    msg["content"],
+                    language=None
+                )
 
 # ============================================================
 # CHAT INPUT
 # ============================================================
 
+default_prompt = voice_prompt
+
 prompt = st.chat_input(
-    "Írd be a futtatandó témát..."
+    "Írd be a futtatandó témát...",
+    key="cognito_chat_input_v2"
 )
+
+# ============================================================
+# FINAL INPUT BUILD
+# ============================================================
+
+final_user_input = ""
+
+if prompt:
+    final_user_input += prompt
+
+if parsed_file_content:
+
+    final_user_input += (
+        "\n\n[PARSED FILE CONTENT]\n\n"
+        + parsed_file_content
+    )
 
 # ============================================================
 # EXECUTION ENGINE
 # ============================================================
 
-if prompt:
+if final_user_input.strip():
 
     # ========================================================
-    # SAVE USER MESSAGE
+    # USER MESSAGE
     # ========================================================
 
     st.session_state.chat_messages.append({
         "role": "user",
-        "content": prompt
+        "content": final_user_input
     })
 
     with st.chat_message(
         "user",
         avatar="👤"
     ):
-        st.markdown(prompt)
+        st.markdown(final_user_input)
 
     # ========================================================
-    # COGNITIVE STATUS
+    # STATUS
     # ========================================================
 
     with st.status(
-        "⚙️ Kognitív Reaktor Fut...",
+        "⚙️ COGNITO Runtime aktív...",
         expanded=True
     ) as status:
 
         pat_data = pat_eng.scan(
-            prompt
+            final_user_input
         )
 
         new_json, comp_use = comp.compile_state(
-            prompt,
+            final_user_input,
             pat_data
         )
 
@@ -1530,7 +1289,7 @@ if prompt:
         )
 
         status.update(
-            label="✅ OMNI Dekódolás kész.",
+            label="✅ Kognitív állapotfrissítés kész",
             state="complete"
         )
 
@@ -1549,13 +1308,15 @@ if prompt:
     )
 
     # ========================================================
-    # MODEL EXECUTION
+    # ASSISTANT RESPONSE
     # ========================================================
 
     with st.chat_message(
         "assistant",
         avatar="◼️"
     ):
+
+        response_placeholder = st.empty()
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -1566,7 +1327,7 @@ if prompt:
                 },
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": final_user_input
                 }
             ]
         )
@@ -1575,16 +1336,14 @@ if prompt:
 
         update_cost(response.usage)
 
-        st.markdown(out)
+        response_placeholder.markdown(out)
 
-        # ====================================================
-        # NATIVE COPY
-        # ====================================================
+        with st.expander("📋 Copy Output"):
 
-        st.code(
-            out,
-            language=None
-        )
+            st.code(
+                out,
+                language=None
+            )
 
     # ========================================================
     # SAVE ASSISTANT MESSAGE
@@ -1602,5 +1361,7 @@ if prompt:
 # ============================================================
 
 st.caption(
-    "COGNITO ENGINE — Multimodal Cognitive Runtime"
+    "COGNITO ENGINE — Cyberpunk Multimodal Runtime"
 )
+            
+        
