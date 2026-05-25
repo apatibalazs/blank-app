@@ -1035,9 +1035,29 @@ if st.session_state.state_history:
 # =============================================================================
 
 # ============================================================
-# MULTIMODAL INPUT + CHATGPT STYLE RUNTIME UI
-# COGNITO RUNTIME UI v2
+# COGNITO RUNTIME UI v4
+# CHATGPT-STYLE CYBERPUNK MULTIMODAL RUNTIME
+# STABLE LOOP-SAFE VERSION
 # ============================================================
+
+import tempfile
+import hashlib
+
+# ============================================================
+# SESSION STATE INIT
+# ============================================================
+
+if "chat_messages" not in st.session_state:
+    st.session_state.chat_messages = []
+
+if "parsed_file_content" not in st.session_state:
+    st.session_state.parsed_file_content = ""
+
+if "last_uploaded_file" not in st.session_state:
+    st.session_state.last_uploaded_file = None
+
+if "last_audio_hash" not in st.session_state:
+    st.session_state.last_audio_hash = None
 
 # ============================================================
 # FILE / IMAGE INPUT
@@ -1047,7 +1067,7 @@ uploaded_file = st.file_uploader(
     "📎 FILE / IMAGE INPUT",
     type=["txt", "pdf", "png", "jpg", "jpeg"],
     accept_multiple_files=False,
-    key="cognito_file_upload_v2"
+    key="cognito_file_upload_v4"
 )
 
 # ============================================================
@@ -1058,100 +1078,162 @@ st.markdown("### 🎤 Voice Input")
 
 audio_file = st.audio_input(
     "Voice prompt",
-    key="cognito_voice_input_v2"
+    key="cognito_voice_input_v4"
 )
 
 voice_prompt = ""
 
+# ============================================================
+# VOICE PROCESSING (LOOP SAFE)
+# ============================================================
+
 if audio_file is not None:
 
-    with st.spinner("🎧 Audio feldolgozás..."):
+    audio_bytes = audio_file.getvalue()
 
-        transcript = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file
+    current_audio_hash = hashlib.md5(
+        audio_bytes
+    ).hexdigest()
+
+    if (
+        st.session_state.last_audio_hash
+        != current_audio_hash
+    ):
+
+        st.session_state.last_audio_hash = (
+            current_audio_hash
         )
 
-        voice_prompt = transcript.text
+        with st.spinner(
+            "🎧 Audio feldolgozás..."
+        ):
 
-        st.success("✅ Voice input feldolgozva")
+            transcript = (
+                client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file
+                )
+            )
+
+            voice_prompt = transcript.text
+
+            st.success(
+                "✅ Voice input feldolgozva"
+            )
+
+else:
+
+    st.session_state.last_audio_hash = None
 
 # ============================================================
-# FILE CONTENT PARSING
+# FILE PARSING (LOOP SAFE)
 # ============================================================
-
-parsed_file_content = ""
 
 if uploaded_file is not None:
 
-    file_name = uploaded_file.name.lower()
+    current_file_id = (
+        f"{uploaded_file.name}_{uploaded_file.size}"
+    )
 
-    try:
+    if (
+        st.session_state.last_uploaded_file
+        != current_file_id
+    ):
 
-        # ====================================================
-        # TXT
-        # ====================================================
+        st.session_state.last_uploaded_file = (
+            current_file_id
+        )
 
-        if file_name.endswith(".txt"):
+        file_name = uploaded_file.name.lower()
 
-            parsed_file_content = uploaded_file.read().decode(
-                "utf-8",
-                errors="ignore"
+        try:
+
+            parsed_file_content = ""
+
+            # ====================================================
+            # TXT
+            # ====================================================
+
+            if file_name.endswith(".txt"):
+
+                parsed_file_content = (
+                    uploaded_file.read().decode(
+                        "utf-8",
+                        errors="ignore"
+                    )
+                )
+
+            # ====================================================
+            # PDF
+            # ====================================================
+
+            elif file_name.endswith(".pdf"):
+
+                import fitz
+
+                pdf_bytes = uploaded_file.read()
+
+                pdf = fitz.open(
+                    stream=pdf_bytes,
+                    filetype="pdf"
+                )
+
+                pages = []
+
+                for page in pdf:
+
+                    pages.append(
+                        page.get_text()
+                    )
+
+                parsed_file_content = (
+                    "\n".join(pages)
+                )
+
+            # ====================================================
+            # IMAGE
+            # ====================================================
+
+            elif (
+                file_name.endswith(".png")
+                or file_name.endswith(".jpg")
+                or file_name.endswith(".jpeg")
+            ):
+
+                st.image(
+                    uploaded_file,
+                    use_container_width=True
+                )
+
+                parsed_file_content = (
+                    "[IMAGE INPUT DETECTED]"
+                )
+
+            # ====================================================
+            # SAVE PARSED CONTENT
+            # ====================================================
+
+            st.session_state.parsed_file_content = (
+                parsed_file_content
             )
 
-        # ====================================================
-        # PDF
-        # ====================================================
-
-        elif file_name.endswith(".pdf"):
-
-            import fitz
-
-            pdf_bytes = uploaded_file.read()
-
-            pdf = fitz.open(
-                stream=pdf_bytes,
-                filetype="pdf"
+            st.success(
+                "✅ Fájl feldolgozva"
             )
 
-            pages = []
+        except Exception as e:
 
-            for page in pdf:
-                pages.append(page.get_text())
-
-            parsed_file_content = "\n".join(pages)
-
-        # ====================================================
-        # IMAGE
-        # ====================================================
-
-        elif (
-            file_name.endswith(".png")
-            or file_name.endswith(".jpg")
-            or file_name.endswith(".jpeg")
-        ):
-
-            st.image(
-                uploaded_file,
-                use_container_width=True
+            st.error(
+                f"File parse error: {e}"
             )
 
-            parsed_file_content = (
-                "[IMAGE INPUT DETECTED]"
-            )
+else:
 
-        st.success("✅ Fájl feldolgozva")
+    st.session_state.last_uploaded_file = None
 
-    except Exception as e:
-
-        st.error(f"File parse error: {e}")
-
-# ============================================================
-# SESSION STATE INIT
-# ============================================================
-
-if "chat_messages" not in st.session_state:
-    st.session_state.chat_messages = []
+parsed_file_content = (
+    st.session_state.parsed_file_content
+)
 
 # ============================================================
 # CYBERPUNK CHAT CSS
@@ -1165,20 +1247,26 @@ st.markdown("""
     padding: 14px;
     margin-bottom: 14px;
     border: 1px solid rgba(0,255,200,0.15);
-    background: rgba(15,15,25,0.65);
+    background: rgba(15,15,25,0.72);
     backdrop-filter: blur(10px);
 }
 
 .stChatInputContainer {
-    background: rgba(10,10,20,0.88);
+    background: rgba(10,10,20,0.94);
     border-top: 1px solid rgba(0,255,255,0.18);
 }
 
 .stChatInput textarea {
     border-radius: 18px !important;
-    border: 1px solid rgba(0,255,255,0.2) !important;
-    background: rgba(20,20,30,0.9) !important;
+    border: 1px solid rgba(0,255,255,0.25) !important;
+    background: rgba(20,20,30,0.96) !important;
     color: white !important;
+}
+
+div[data-testid="stExpander"] {
+    border: 1px solid rgba(0,255,255,0.12);
+    border-radius: 12px;
+    background: rgba(15,15,25,0.55);
 }
 
 </style>
@@ -1190,22 +1278,28 @@ st.markdown("""
 
 st.markdown("---")
 
-for idx, msg in enumerate(st.session_state.chat_messages):
+for idx, msg in enumerate(
+    st.session_state.chat_messages
+):
 
     with st.chat_message(
         msg["role"],
         avatar="👤" if msg["role"] == "user" else "◼️"
     ):
 
-        st.markdown(msg["content"])
+        st.markdown(
+            msg["content"]
+        )
 
         # ====================================================
-        # COPYABLE OUTPUT
+        # COMPACT COPY PANEL
         # ====================================================
 
         if msg["role"] == "assistant":
 
-            with st.expander("📋 Copy Output"):
+            with st.expander(
+                "📋 Copy"
+            ):
 
                 st.code(
                     msg["content"],
@@ -1216,37 +1310,44 @@ for idx, msg in enumerate(st.session_state.chat_messages):
 # CHAT INPUT
 # ============================================================
 
-default_prompt = voice_prompt
-
 prompt = st.chat_input(
     "Írd be a futtatandó témát...",
-    key="cognito_chat_input_v2"
+    key="cognito_chat_input_v4"
 )
 
 # ============================================================
-# FINAL INPUT BUILD
+# VOICE PROMPT MERGE
 # ============================================================
 
-final_user_input = ""
+if (
+    voice_prompt
+    and
+    not prompt
+):
 
-if prompt:
-    final_user_input += prompt
-
-if parsed_file_content:
-
-    final_user_input += (
-        "\n\n[PARSED FILE CONTENT]\n\n"
-        + parsed_file_content
-    )
+    prompt = voice_prompt
 
 # ============================================================
 # EXECUTION ENGINE
 # ============================================================
 
-if final_user_input.strip():
+if prompt:
 
     # ========================================================
-    # USER MESSAGE
+    # FINAL INPUT BUILD
+    # ========================================================
+
+    final_user_input = prompt
+
+    if parsed_file_content:
+
+        final_user_input += (
+            "\n\n[PARSED FILE CONTENT]\n\n"
+            + parsed_file_content
+        )
+
+    # ========================================================
+    # SAVE USER MESSAGE
     # ========================================================
 
     st.session_state.chat_messages.append({
@@ -1258,7 +1359,10 @@ if final_user_input.strip():
         "user",
         avatar="👤"
     ):
-        st.markdown(final_user_input)
+
+        st.markdown(
+            final_user_input
+        )
 
     # ========================================================
     # STATUS
@@ -1278,7 +1382,9 @@ if final_user_input.strip():
             pat_data
         )
 
-        update_cost(comp_use)
+        update_cost(
+            comp_use
+        )
 
         st.session_state.state_history = (
             st_mach.update(
@@ -1297,14 +1403,16 @@ if final_user_input.strip():
     # PROMPT BUILD
     # ========================================================
 
-    final_prompt = WritingEngine.generate_prompt(
-        run_state,
-        run_mode,
-        web_mode,
-        out_format,
-        switches,
-        st.session_state.state_history[-1],
-        pat_data
+    final_prompt = (
+        WritingEngine.generate_prompt(
+            run_state,
+            run_mode,
+            web_mode,
+            out_format,
+            switches,
+            st.session_state.state_history[-1],
+            pat_data
+        )
     )
 
     # ========================================================
@@ -1332,13 +1440,27 @@ if final_user_input.strip():
             ]
         )
 
-        out = response.choices[0].message.content
+        out = (
+            response
+            .choices[0]
+            .message.content
+        )
 
-        update_cost(response.usage)
+        update_cost(
+            response.usage
+        )
 
-        response_placeholder.markdown(out)
+        response_placeholder.markdown(
+            out
+        )
 
-        with st.expander("📋 Copy Output"):
+        # ====================================================
+        # COMPACT COPY
+        # ====================================================
+
+        with st.expander(
+            "📋 Copy"
+        ):
 
             st.code(
                 out,
@@ -1354,6 +1476,16 @@ if final_user_input.strip():
         "content": out
     })
 
+    # ========================================================
+    # CLEAR FILE CACHE
+    # ========================================================
+
+    st.session_state.parsed_file_content = ""
+
+    # ========================================================
+    # RERUN
+    # ========================================================
+
     st.rerun()
 
 # ============================================================
@@ -1361,7 +1493,5 @@ if final_user_input.strip():
 # ============================================================
 
 st.caption(
-    "COGNITO ENGINE — Cyberpunk Multimodal Runtime"
-)
-            
-        
+    "COGNITO ENGINE — Cyberpunk Multimodal Runtime v4"
+            )
