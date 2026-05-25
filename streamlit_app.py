@@ -1035,17 +1035,14 @@ if st.session_state.state_history:
 # ============================================================================
 
 # ============================================================
-# COGNITO RUNTIME SHELL v7
-# REAL FRONTEND / BACKEND BRIDGE
-# CHATGPT-LIKE CYBERPUNK INTERFACE
+# INIT MODULE
+# RUNTIME INPUT SYSTEM
 # ============================================================
 
 import streamlit as st
 import streamlit.components.v1 as components
 
 import json
-import hashlib
-import fitz
 
 # ============================================================
 # SESSION STATE
@@ -1054,23 +1051,8 @@ import fitz
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
 
-if "runtime_prompt" not in st.session_state:
-    st.session_state.runtime_prompt = ""
-
-if "runtime_uploaded_text" not in st.session_state:
-    st.session_state.runtime_uploaded_text = ""
-
-if "runtime_audio_text" not in st.session_state:
-    st.session_state.runtime_audio_text = ""
-
-if "last_uploaded_file" not in st.session_state:
-    st.session_state.last_uploaded_file = None
-
-if "last_audio_hash" not in st.session_state:
-    st.session_state.last_audio_hash = None
-
 # ============================================================
-# GLOBAL CSS
+# CYBERPUNK GLOBAL CSS
 # ============================================================
 
 st.markdown("""
@@ -1087,12 +1069,25 @@ body,
     background:
         radial-gradient(
             circle at top,
-            #08111f 0%,
-            #040816 60%,
-            #02030a 100%
+            #081320 0%,
+            #030712 60%,
+            #01040a 100%
         );
 
     color:white;
+}
+
+/* =========================================================
+HIDE STREAMLIT WIDGETS
+========================================================= */
+
+[data-testid="stChatInput"],
+[data-testid="stTextInput"],
+[data-testid="stFileUploader"],
+[data-testid="stAudioInput"],
+.stButton {
+
+    display:none !important;
 }
 
 /* =========================================================
@@ -1102,92 +1097,125 @@ CHAT MESSAGE
 [data-testid="stChatMessage"] {
 
     background:
-        rgba(12,18,28,0.74);
+        rgba(10,18,30,0.72);
 
     border:
-        1px solid rgba(0,255,255,0.12);
+        1px solid rgba(0,255,255,0.10);
 
-    border-radius:20px;
+    border-radius:22px;
 
-    padding:16px;
+    padding:18px;
 
     margin-bottom:18px;
 
-    backdrop-filter:blur(14px);
+    backdrop-filter:blur(12px);
 
     box-shadow:
         0 0 24px rgba(0,255,255,0.04);
 }
 
 /* =========================================================
-HIDE DEFAULT STREAMLIT INPUTS
+BOTTOM SPACER
 ========================================================= */
 
-[data-testid="stChatInput"] {
-    display:none;
+.cog-bottom-space {
+
+    height:140px;
 }
 
-.stButton {
-    display:none;
-}
+</style>
+""", unsafe_allow_html=True)
 
-/* =========================================================
-FILE UPLOADER
-========================================================= */
+# ============================================================
+# CHAT HISTORY
+# ============================================================
 
-[data-testid="stFileUploader"] {
+for msg in st.session_state.chat_messages:
 
-    position:fixed;
+    with st.chat_message(
+        msg["role"],
+        avatar="👤" if msg["role"] == "user" else "◼️"
+    ):
 
-    bottom:95px;
+        st.markdown(
+            msg["content"]
+        )
 
-    left:20px;
+        # ====================================================
+        # COPY BUTTON
+        # ====================================================
 
-    width:1px;
+        if msg["role"] == "assistant":
 
-    height:1px;
+            safe_text = json.dumps(
+                msg["content"]
+            )
 
-    opacity:0;
+            components.html(f"""
+            <div style="
+                display:flex;
+                justify-content:flex-end;
+                margin-top:12px;
+            ">
 
-    z-index:-999;
-}
+            <button
+                onclick='
+                    navigator.clipboard.writeText({safe_text});
 
-/* =========================================================
-AUDIO INPUT
-========================================================= */
+                    this.innerText="✅";
 
-[data-testid="stAudioInput"] {
+                    setTimeout(() => {{
+                        this.innerText="📋 COPY";
+                    }},1200);
+                '
 
-    position:fixed;
+                style="
+                    background:
+                        rgba(0,255,255,0.08);
 
-    bottom:95px;
+                    border:
+                        1px solid rgba(0,255,255,0.18);
 
-    left:20px;
+                    color:white;
 
-    width:1px;
+                    border-radius:12px;
 
-    height:1px;
+                    padding:8px 14px;
 
-    opacity:0;
+                    cursor:pointer;
 
-    z-index:-999;
-}
+                    font-size:14px;
+                "
+            >
+                📋 COPY
+            </button>
+
+            </div>
+            """, height=60)
+
+# ============================================================
+# RUNTIME INPUT SYSTEM
+# ============================================================
+
+runtime_value = components.html("""
+
+<style>
 
 /* =========================================================
 COMPOSER WRAP
 ========================================================= */
 
-.cog-shell-wrap {
+#cog-wrap {
 
     position:fixed;
 
-    bottom:18px;
+    bottom:12px;
 
     left:50%;
 
     transform:translateX(-50%);
 
-    width:min(920px,96vw);
+    width:min(940px,96vw);
 
     z-index:999999;
 }
@@ -1196,7 +1224,7 @@ COMPOSER WRAP
 COMPOSER
 ========================================================= */
 
-.cog-shell {
+#cog-composer {
 
     display:flex;
 
@@ -1204,15 +1232,15 @@ COMPOSER
 
     gap:10px;
 
+    padding:12px;
+
+    border-radius:26px;
+
     background:
-        rgba(10,16,28,0.92);
+        rgba(8,14,24,0.94);
 
     border:
-        1px solid rgba(0,255,255,0.12);
-
-    border-radius:24px;
-
-    padding:12px;
+        1px solid rgba(0,255,255,0.14);
 
     backdrop-filter:blur(18px);
 
@@ -1226,21 +1254,21 @@ ICON BUTTONS
 
 .cog-btn {
 
-    width:44px;
+    width:46px;
 
-    height:44px;
+    height:46px;
 
     border-radius:14px;
 
     border:
-        1px solid rgba(0,255,255,0.14);
+        1px solid rgba(0,255,255,0.18);
 
     background:
-        rgba(0,255,255,0.05);
+        rgba(0,255,255,0.06);
 
     color:white;
 
-    font-size:18px;
+    font-size:20px;
 
     cursor:pointer;
 
@@ -1250,17 +1278,17 @@ ICON BUTTONS
 .cog-btn:hover {
 
     background:
-        rgba(0,255,255,0.14);
+        rgba(0,255,255,0.16);
 
     box-shadow:
-        0 0 12px rgba(0,255,255,0.18);
+        0 0 14px rgba(0,255,255,0.22);
 }
 
 /* =========================================================
-INPUT
+TEXT INPUT
 ========================================================= */
 
-.cog-input {
+#cog-input {
 
     flex:1;
 
@@ -1274,7 +1302,7 @@ INPUT
         rgba(18,24,38,0.96);
 
     border:
-        1px solid rgba(0,255,255,0.10);
+        1px solid rgba(0,255,255,0.12);
 
     color:white;
 
@@ -1287,11 +1315,11 @@ INPUT
 SEND BUTTON
 ========================================================= */
 
-.cog-send {
+#cog-send {
 
-    width:52px;
+    width:56px;
 
-    height:52px;
+    height:56px;
 
     border:none;
 
@@ -1315,383 +1343,265 @@ SEND BUTTON
     transition:0.2s;
 }
 
-.cog-send:hover {
+#cog-send:hover {
 
-    transform:scale(1.05);
+    transform:scale(1.04);
 
     box-shadow:
         0 0 20px rgba(0,255,255,0.28);
 }
 
 /* =========================================================
-COPY BUTTON
+MOBILE
 ========================================================= */
 
-.cog-copy {
+@media (max-width:768px) {
 
-    background:
-        rgba(0,255,255,0.08);
+    #cog-wrap {
 
-    border:
-        1px solid rgba(0,255,255,0.16);
+        width:98vw;
 
-    color:white;
+        bottom:6px;
+    }
 
-    border-radius:10px;
+    #cog-composer {
 
-    padding:6px 10px;
+        padding:10px;
+    }
 
-    cursor:pointer;
-}
+    .cog-btn {
 
-/* =========================================================
-BOTTOM SPACE
-========================================================= */
+        width:42px;
+        height:42px;
+    }
 
-.cog-bottom-space {
+    #cog-send {
 
-    height:140px;
+        width:50px;
+        height:50px;
+    }
 }
 
 </style>
-""", unsafe_allow_html=True)
 
-# ============================================================
-# HIDDEN REAL FILE INPUT
-# ============================================================
-
-uploaded_file = st.file_uploader(
-    "hidden upload",
-    type=["txt", "pdf", "png", "jpg", "jpeg"],
-    key="hidden_runtime_upload"
-)
-
-# ============================================================
-# HIDDEN REAL AUDIO INPUT
-# ============================================================
-
-audio_file = st.audio_input(
-    "hidden audio",
-    key="hidden_runtime_audio"
-)
-
-# ============================================================
-# FILE PROCESSING
-# ============================================================
-
-if uploaded_file is not None:
-
-    current_file_id = (
-        f"{uploaded_file.name}_{uploaded_file.size}"
-    )
-
-    if (
-        st.session_state.last_uploaded_file
-        != current_file_id
-    ):
-
-        st.session_state.last_uploaded_file = (
-            current_file_id
-        )
-
-        file_name = uploaded_file.name.lower()
-
-        parsed_text = ""
-
-        try:
-
-            # TXT
-            if file_name.endswith(".txt"):
-
-                parsed_text = (
-                    uploaded_file.read().decode(
-                        "utf-8",
-                        errors="ignore"
-                    )
-                )
-
-            # PDF
-            elif file_name.endswith(".pdf"):
-
-                pdf_bytes = uploaded_file.read()
-
-                pdf = fitz.open(
-                    stream=pdf_bytes,
-                    filetype="pdf"
-                )
-
-                pages = []
-
-                for page in pdf:
-
-                    pages.append(
-                        page.get_text()
-                    )
-
-                parsed_text = (
-                    "\n".join(pages)
-                )
-
-            # IMAGE
-            elif (
-                file_name.endswith(".png")
-                or file_name.endswith(".jpg")
-                or file_name.endswith(".jpeg")
-            ):
-
-                st.image(
-                    uploaded_file,
-                    use_container_width=True
-                )
-
-                parsed_text = (
-                    "[IMAGE INPUT DETECTED]"
-                )
-
-            st.session_state.runtime_uploaded_text = (
-                parsed_text
-            )
-
-            st.toast(
-                "📎 File processed"
-            )
-
-        except Exception as e:
-
-            st.error(
-                f"FILE ERROR: {e}"
-            )
-
-else:
-
-    st.session_state.last_uploaded_file = None
-
-# ============================================================
-# AUDIO PROCESSING
-# ============================================================
-
-if audio_file is not None:
-
-    audio_bytes = audio_file.getvalue()
-
-    current_audio_hash = hashlib.md5(
-        audio_bytes
-    ).hexdigest()
-
-    if (
-        st.session_state.last_audio_hash
-        != current_audio_hash
-    ):
-
-        st.session_state.last_audio_hash = (
-            current_audio_hash
-        )
-
-        with st.spinner(
-            "🎧 Audio processing..."
-        ):
-
-            transcript = (
-                client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file
-                )
-            )
-
-            st.session_state.runtime_audio_text = (
-                transcript.text
-            )
-
-            st.toast(
-                "🎤 Voice processed"
-            )
-
-else:
-
-    st.session_state.last_audio_hash = None
-
-# ============================================================
-# CHAT HISTORY
-# ============================================================
-
-for msg in st.session_state.chat_messages:
-
-    with st.chat_message(
-        msg["role"],
-        avatar="👤" if msg["role"] == "user" else "◼️"
-    ):
-
-        st.markdown(
-            msg["content"]
-        )
-
-        # COPY
-        if msg["role"] == "assistant":
-
-            safe_json = json.dumps(
-                msg["content"]
-            )
-
-            copy_html = f"""
-            <div style="
-            display:flex;
-            justify-content:flex-end;
-            margin-top:10px;
-            ">
-            <button
-            class="cog-copy"
-            onclick='
-            navigator.clipboard.writeText({safe_json});
-            this.innerText="✅";
-            setTimeout(() => {{
-                this.innerText="📋";
-            }},1200);
-            '
-            >
-            📋
-            </button>
-            </div>
-            """
-
-            components.html(
-                copy_html,
-                height=42
-            )
-
-# ============================================================
-# REAL INPUT BRIDGE
-# ============================================================
-
-runtime_input = st.text_input(
-    "hidden runtime bridge",
-    key="hidden_runtime_bridge",
-    label_visibility="collapsed"
-)
-
-# ============================================================
-# FRONTEND RUNTIME SHELL
-# ============================================================
-
-components.html("""
-<div class="cog-shell-wrap">
-
-<div class="cog-shell">
-
-<button
-class="cog-btn"
-onclick="
-window.parent.document
-.querySelector('[data-testid=stFileUploader] button')
-.click();
-"
->
-📎
-</button>
-
-<button
-class="cog-btn"
-onclick="
-window.parent.document
-.querySelector('[data-testid=stAudioInput] button')
-.click();
-"
->
-🎤
-</button>
-
-<input
-id="cog_runtime_input"
-class="cog-input"
-placeholder="Írd be a futtatandó témát..."
-/>
-
-<button
-class="cog-send"
-onclick="
-const val =
-document.getElementById(
-'cog_runtime_input'
-).value;
-
-const inputs =
-window.parent.document
-.querySelectorAll('input');
-
-inputs.forEach(el => {
-
-if (
-el.getAttribute('aria-label')
-=== 'hidden runtime bridge'
-) {
-
-const nativeInputValueSetter =
-Object.getOwnPropertyDescriptor(
-window.HTMLInputElement.prototype,
-'value'
-).set;
-
-nativeInputValueSetter.call(
-el,
-val
-);
-
-el.dispatchEvent(
-new Event(
-'input',
-{ bubbles:true }
-)
-);
-}
-});
-"
->
-➤
-</button>
-
-</div>
+<div id="cog-wrap">
+
+    <div id="cog-composer">
+
+        <!-- ========================================= -->
+        <!-- FILE -->
+        <!-- ========================================= -->
+
+        <input
+            type="file"
+            id="real-file-input"
+            style="display:none;"
+        >
+
+        <button
+            class="cog-btn"
+            onclick="
+                document
+                .getElementById('real-file-input')
+                .click();
+            "
+        >
+            📎
+        </button>
+
+        <!-- ========================================= -->
+        <!-- MIC -->
+        <!-- ========================================= -->
+
+        <button
+            class="cog-btn"
+            id="mic-btn"
+        >
+            🎤
+        </button>
+
+        <!-- ========================================= -->
+        <!-- INPUT -->
+        <!-- ========================================= -->
+
+        <input
+            id="cog-input"
+            placeholder="Írd be a futtatandó témát..."
+        >
+
+        <!-- ========================================= -->
+        <!-- SEND -->
+        <!-- ========================================= -->
+
+        <button
+            id="cog-send"
+        >
+            ➤
+        </button>
+
+    </div>
 
 </div>
 
 <div class="cog-bottom-space"></div>
-""", height=120)
+
+<script>
+
+/* =========================================================
+MIC STATE
+========================================================= */
+
+let recognition = null;
+
+let micActive = false;
+
+/* =========================================================
+VOICE RECOGNITION
+========================================================= */
+
+if (
+    'webkitSpeechRecognition'
+    in window
+) {
+
+    recognition =
+        new webkitSpeechRecognition();
+
+    recognition.lang = 'hu-HU';
+
+    recognition.continuous = false;
+
+    recognition.interimResults = false;
+
+    recognition.onresult = function(event) {
+
+        const text =
+            event.results[0][0].transcript;
+
+        document
+            .getElementById(
+                'cog-input'
+            ).value += " " + text;
+    };
+
+    recognition.onend = function() {
+
+        micActive = false;
+
+        document
+            .getElementById(
+                'mic-btn'
+            ).style.background =
+                'rgba(0,255,255,0.06)';
+    };
+}
+
+/* =========================================================
+MIC BUTTON
+========================================================= */
+
+document
+.getElementById(
+    'mic-btn'
+)
+.onclick = function() {
+
+    if (!recognition) {
+
+        alert(
+            'Speech recognition not supported'
+        );
+
+        return;
+    }
+
+    if (!micActive) {
+
+        recognition.start();
+
+        micActive = true;
+
+        this.style.background =
+            'rgba(255,0,120,0.32)';
+    }
+    else {
+
+        recognition.stop();
+
+        micActive = false;
+
+        this.style.background =
+            'rgba(0,255,255,0.06)';
+    }
+};
+
+/* =========================================================
+SEND
+========================================================= */
+
+document
+.getElementById(
+    'cog-send'
+)
+.onclick = function() {
+
+    const text =
+        document
+        .getElementById(
+            'cog-input'
+        ).value;
+
+    Streamlit.setComponentValue(
+        text
+    );
+};
+
+/* =========================================================
+ENTER
+========================================================= */
+
+document
+.getElementById(
+    'cog-input'
+)
+.addEventListener(
+    'keydown',
+    function(e) {
+
+        if (
+            e.key === 'Enter'
+        ) {
+
+            e.preventDefault();
+
+            document
+            .getElementById(
+                'cog-send'
+            )
+            .click();
+        }
+    }
+);
+
+</script>
+
+""", height=140)
 
 # ============================================================
 # EXECUTION ENGINE
 # ============================================================
 
-if runtime_input:
+if runtime_value:
 
-    final_input = runtime_input
-
-    # AUDIO MERGE
-    if (
-        st.session_state.runtime_audio_text
-    ):
-
-        final_input += (
-            "\n\n[VOICE INPUT]\n\n"
-            +
-            st.session_state.runtime_audio_text
-        )
-
-    # FILE MERGE
-    if (
-        st.session_state.runtime_uploaded_text
-    ):
-
-        final_input += (
-            "\n\n[FILE INPUT]\n\n"
-            +
-            st.session_state.runtime_uploaded_text
-        )
+    user_input = runtime_value
 
     # ========================================================
-    # SAVE USER
+    # SAVE USER MESSAGE
     # ========================================================
 
     st.session_state.chat_messages.append({
         "role":"user",
-        "content":final_input
+        "content":user_input
     })
 
     # ========================================================
@@ -1704,12 +1614,12 @@ if runtime_input:
     ) as status:
 
         pat_data = pat_eng.scan(
-            final_input
+            user_input
         )
 
         new_json, comp_use = (
             comp.compile_state(
-                final_input,
+                user_input,
                 pat_data
             )
         )
@@ -1727,7 +1637,7 @@ if runtime_input:
         )
 
         status.update(
-            label="✅ Runtime state updated",
+            label="✅ Runtime frissítve",
             state="complete"
         )
 
@@ -1748,7 +1658,7 @@ if runtime_input:
     )
 
     # ========================================================
-    # MODEL
+    # MODEL EXECUTION
     # ========================================================
 
     response = (
@@ -1761,7 +1671,7 @@ if runtime_input:
                 },
                 {
                     "role":"user",
-                    "content":final_input
+                    "content":user_input
                 }
             ]
         )
@@ -1786,14 +1696,6 @@ if runtime_input:
         "content":out
     })
 
-    # ========================================================
-    # CLEAR
-    # ========================================================
-
-    st.session_state.runtime_uploaded_text = ""
-    st.session_state.runtime_audio_text = ""
-    st.session_state.hidden_runtime_bridge = ""
-
     st.rerun()
 
 # ============================================================
@@ -1801,5 +1703,5 @@ if runtime_input:
 # ============================================================
 
 st.caption(
-    "COGNITO ENGINE PRO — Runtime Shell v7"
+    "COGNITO ENGINE PRO — Runtime Shell v8"
 )
