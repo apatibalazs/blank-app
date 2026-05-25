@@ -1618,6 +1618,91 @@ if execute_clicked:
         st.rerun()
 
 # ============================================================
+# CHAT HISTORY RENDER
+# ============================================================
+
+st.markdown("---")
+
+for msg in st.session_state.chat_messages:
+
+    if msg["role"] == "user":
+
+        with st.chat_message(
+            "user",
+            avatar="👤"
+        ):
+            st.markdown(msg["content"])
+
+    elif msg["role"] == "assistant":
+
+        with st.chat_message(
+            "assistant",
+            avatar="◼️"
+        ):
+
+            st.markdown(msg["content"])
+
+            # COPY BUTTON
+
+            safe_output = (
+                msg["content"]
+                .replace("\\", "\\\\")
+                .replace("`", "\\`")
+                .replace("$", "\\$")
+            )
+
+            copy_html = f"""
+            <div style="margin-top:20px;">
+                <button
+                    onclick="navigator.clipboard.writeText(`{safe_output}`)"
+                    style="
+                        width:100%;
+                        padding:16px;
+                        border:none;
+                        border-radius:14px;
+                        font-size:20px;
+                        font-weight:bold;
+                        cursor:pointer;
+                        background:linear-gradient(90deg,#00f5a0,#00bbff);
+                        color:black;
+                        margin-top:15px;
+                        margin-bottom:10px;
+                        box-shadow:0 0 20px rgba(0,255,200,0.45);
+                    ">
+                    📋 COPY OUTPUT
+                </button>
+            </div>
+            """
+
+            st.components.v1.html(
+                copy_html,
+                height=90
+            )
+
+# ============================================================
+# INPUT AREA
+# ============================================================
+
+st.markdown("### RENDSZER-INPUT")
+
+st.text_area(
+    "",
+    key="input_text",
+    height=220,
+    placeholder="Írd be a futtatandó témát..."
+)
+
+# ============================================================
+# EXECUTION BUTTON
+# ============================================================
+
+execute_clicked = st.button(
+    "⚡ EXECUTE COGNITIVE PIPELINE",
+    key="main_execute_button_v2",
+    use_container_width=True
+)
+
+# ============================================================
 # FOOTER
 # ============================================================
 
