@@ -1031,23 +1031,20 @@ if st.session_state.state_history:
             f"{cur['entropy']:.2f}"
         )
 
-# ========================================================= 
 # ============================================================
 # INIT MODULE
-# RUNTIME INPUT SYSTEM
-# COGNITO RUNTIME SHELL v22
-# FINAL AUDITED MOBILE STABLE
+# COGNITO RUNTIME SHELL v24
+# FULL STABLE BUILD
 # ============================================================
 
+import json
 import streamlit as st
 import streamlit.components.v1 as components
-
-import json
 
 from openai import OpenAI
 
 # ============================================================
-# ENGINE INITIALIZATION
+# ENGINE INIT
 # ============================================================
 
 if "engine_initialized" not in st.session_state:
@@ -1059,19 +1056,13 @@ if "engine_initialized" not in st.session_state:
         )
     )
 
-    st.session_state.pat_eng = (
-        PatternEngine()
+    st.session_state.pat_eng = PatternEngine()
+
+    st.session_state.comp = MemoryCompiler(
+        st.session_state.client
     )
 
-    st.session_state.comp = (
-        MemoryCompiler(
-            st.session_state.client
-        )
-    )
-
-    st.session_state.st_mach = (
-        StateMachine()
-    )
+    st.session_state.st_mach = StateMachine()
 
     st.session_state.engine_initialized = True
 
@@ -1081,6 +1072,99 @@ if "engine_initialized" not in st.session_state:
 
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
+
+if "uploaded_file_text" not in st.session_state:
+    st.session_state.uploaded_file_text = ""
+
+# ============================================================
+# HIDDEN FILE UPLOADER
+# ============================================================
+
+uploaded_file = st.file_uploader(
+    "upload",
+    type=[
+        "txt",
+        "pdf",
+        "png",
+        "jpg",
+        "jpeg"
+    ],
+    label_visibility="collapsed"
+)
+
+# ============================================================
+# FILE PARSER
+# ============================================================
+
+if uploaded_file is not None:
+
+    try:
+
+        file_name = uploaded_file.name.lower()
+
+        # ====================================================
+        # TXT
+        # ====================================================
+
+        if file_name.endswith(".txt"):
+
+            st.session_state.uploaded_file_text = (
+                uploaded_file
+                .read()
+                .decode(
+                    "utf-8",
+                    errors="ignore"
+                )
+            )
+
+        # ====================================================
+        # PDF
+        # ====================================================
+
+        elif file_name.endswith(".pdf"):
+
+            import fitz
+
+            pdf_bytes = uploaded_file.read()
+
+            pdf = fitz.open(
+                stream=pdf_bytes,
+                filetype="pdf"
+            )
+
+            pages = []
+
+            for page in pdf:
+
+                pages.append(
+                    page.get_text()
+                )
+
+            st.session_state.uploaded_file_text = (
+                "\n".join(pages)
+            )
+
+        # ====================================================
+        # IMAGE
+        # ====================================================
+
+        elif (
+            file_name.endswith(".png")
+            or
+            file_name.endswith(".jpg")
+            or
+            file_name.endswith(".jpeg")
+        ):
+
+            st.session_state.uploaded_file_text = (
+                f"[IMAGE INPUT: {uploaded_file.name}]"
+            )
+
+    except Exception as e:
+
+        st.error(
+            f"FILE PARSE ERROR: {e}"
+        )
 
 # ============================================================
 # GLOBAL CSS
@@ -1121,6 +1205,23 @@ HIDE STREAMLIT INPUTS
     height:0 !important;
 
     overflow:hidden !important;
+}
+
+/* =========================================================
+HIDE FILE UPLOADER
+========================================================= */
+
+[data-testid="stFileUploader"] {
+
+    position:absolute !important;
+
+    left:-9999px !important;
+
+    width:1px !important;
+
+    height:1px !important;
+
+    opacity:0.01 !important;
 }
 
 /* =========================================================
@@ -1317,7 +1418,7 @@ COMPOSER
 
     display:flex;
 
-    align-items:center;
+    align-items:flex-end;
 
     gap:8px;
 
@@ -1381,7 +1482,7 @@ TEXTAREA
 
     min-width:0;
 
-    min-height:54px;
+    height:54px;
 
     max-height:160px;
 
@@ -1454,6 +1555,7 @@ SEND BUTTON
 
         <button
             class="cog-btn"
+            id="upload-btn"
             type="button"
         >
             📎
@@ -1474,6 +1576,7 @@ SEND BUTTON
         <textarea
             id="cog-input"
             rows="1"
+            placeholder="Írj valamit..."
         ></textarea>
 
         <!-- SEND -->
@@ -1586,6 +1689,28 @@ document
 };
 
 /* =========================================================
+UPLOAD BUTTON
+========================================================= */
+
+document
+.getElementById(
+    "upload-btn"
+)
+.onclick = function() {
+
+    const realUpload =
+        window.parent.document
+        .querySelector(
+            '[data-testid="stFileUploader"] input[type="file"]'
+        );
+
+    if (realUpload) {
+
+        realUpload.click();
+    }
+};
+
+/* =========================================================
 SUBMIT
 ========================================================= */
 
@@ -1672,7 +1797,7 @@ function submitPrompt() {
         textarea.value = "";
 
         textarea.style.height =
-            "auto";
+            "54px";
 
         requestAnimationFrame(
             autoResize
@@ -1724,10 +1849,30 @@ if submit_hidden and hidden_prompt:
 
     final_input = hidden_prompt
 
+    # ========================================================
+    # FILE CONTENT
+    # ========================================================
+
+    if st.session_state.uploaded_file_text:
+
+        final_input += (
+            "\n\n[UPLOADED FILE CONTENT]\n\n"
+            +
+            st.session_state.uploaded_file_text
+        )
+
+    # ========================================================
+    # SAVE USER
+    # ========================================================
+
     st.session_state.chat_messages.append({
         "role":"user",
         "content":final_input
     })
+
+    # ========================================================
+    # STATUS
+    # ========================================================
 
     with st.status(
         "⚙️ COGNITO Runtime aktív...",
@@ -1768,6 +1913,10 @@ if submit_hidden and hidden_prompt:
             state="complete"
         )
 
+    # ========================================================
+    # PROMPT BUILD
+    # ========================================================
+
     final_prompt = (
         WritingEngine.generate_prompt(
             run_state,
@@ -1779,6 +1928,10 @@ if submit_hidden and hidden_prompt:
             pat_data
         )
     )
+
+    # ========================================================
+    # MODEL EXECUTION
+    # ========================================================
 
     response = (
         st.session_state
@@ -1810,10 +1963,20 @@ if submit_hidden and hidden_prompt:
         response.usage
     )
 
+    # ========================================================
+    # SAVE ASSISTANT
+    # ========================================================
+
     st.session_state.chat_messages.append({
         "role":"assistant",
         "content":out
     })
+
+    # ========================================================
+    # CLEAR FILE CACHE
+    # ========================================================
+
+    st.session_state.uploaded_file_text = ""
 
     st.rerun()
 
