@@ -1037,14 +1037,13 @@ if st.session_state.state_history:
 # ============================================================
 # INIT MODULE
 # RUNTIME INPUT SYSTEM
-# MONOLITH RUNTIME SHELL v10
+# MONOLITH RUNTIME SHELL v11
 # ============================================================
 
 import streamlit as st
 import streamlit.components.v1 as components
 
 import json
-import base64
 
 # ============================================================
 # SESSION STATE
@@ -1052,18 +1051,6 @@ import base64
 
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
-
-if "runtime_input" not in st.session_state:
-    st.session_state.runtime_input = ""
-
-if "runtime_file_content" not in st.session_state:
-    st.session_state.runtime_file_content = ""
-
-if "runtime_voice_content" not in st.session_state:
-    st.session_state.runtime_voice_content = ""
-
-if "runtime_submit_flag" not in st.session_state:
-    st.session_state.runtime_submit_flag = False
 
 # ============================================================
 # GLOBAL CSS
@@ -1132,7 +1119,7 @@ BOTTOM SPACE
 
 .cog-bottom-space {
 
-    height:140px;
+    height:110px;
 }
 
 </style>
@@ -1177,7 +1164,7 @@ for msg in st.session_state.chat_messages:
             <div style="
                 display:flex;
                 justify-content:flex-end;
-                margin-top:12px;
+                margin-top:10px;
             ">
 
             <button
@@ -1200,20 +1187,20 @@ for msg in st.session_state.chat_messages:
 
                     color:white;
 
-                    border-radius:12px;
+                    border-radius:10px;
 
-                    padding:8px 14px;
+                    padding:6px 10px;
 
                     cursor:pointer;
 
-                    font-size:14px;
+                    font-size:13px;
                 "
             >
                 📋
             </button>
 
             </div>
-            """, height=52)
+            """, height=46)
 
 # ============================================================
 # FRONTEND RUNTIME SHELL
@@ -1233,11 +1220,11 @@ WRAP
 
     left:50%;
 
-    bottom:10px;
+    bottom:8px;
 
     transform:translateX(-50%);
 
-    width:min(940px,96vw);
+    width:min(920px,96vw);
 
     z-index:999999;
 }
@@ -1250,13 +1237,13 @@ COMPOSER
 
     display:flex;
 
-    align-items:flex-end;
+    align-items:center;
 
-    gap:10px;
+    gap:8px;
 
-    padding:12px;
+    padding:8px;
 
-    border-radius:26px;
+    border-radius:22px;
 
     background:
         rgba(8,14,24,0.94);
@@ -1268,7 +1255,7 @@ COMPOSER
         blur(18px);
 
     box-shadow:
-        0 0 34px rgba(0,255,255,0.08);
+        0 0 30px rgba(0,255,255,0.08);
 }
 
 /* =========================================================
@@ -1276,6 +1263,83 @@ BUTTONS
 ========================================================= */
 
 .cog-btn {
+
+    width:42px;
+
+    height:42px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:
+        rgba(0,255,255,0.06);
+
+    border:
+        1px solid rgba(0,255,255,0.16);
+
+    color:white;
+
+    font-size:18px;
+
+    cursor:pointer;
+
+    transition:0.2s;
+
+    flex-shrink:0;
+}
+
+.cog-btn:hover {
+
+    background:
+        rgba(0,255,255,0.16);
+
+    box-shadow:
+        0 0 12px rgba(0,255,255,0.22);
+}
+
+/* =========================================================
+TEXTAREA
+========================================================= */
+
+#cog-input {
+
+    flex:1;
+
+    min-height:22px;
+
+    max-height:120px;
+
+    resize:none;
+
+    border:none;
+
+    outline:none;
+
+    border-radius:16px;
+
+    background:
+        rgba(18,24,38,0.96);
+
+    border:
+        1px solid rgba(0,255,255,0.10);
+
+    color:white;
+
+    font-size:15px;
+
+    line-height:1.4;
+
+    padding:12px 14px;
+
+    overflow-y:auto;
+}
+
+/* =========================================================
+SEND BUTTON
+========================================================= */
+
+#send-btn {
 
     width:46px;
 
@@ -1286,79 +1350,6 @@ BUTTONS
     border-radius:14px;
 
     background:
-        rgba(0,255,255,0.06);
-
-    border:
-        1px solid rgba(0,255,255,0.18);
-
-    color:white;
-
-    font-size:20px;
-
-    cursor:pointer;
-
-    transition:0.2s;
-}
-
-.cog-btn:hover {
-
-    background:
-        rgba(0,255,255,0.16);
-
-    box-shadow:
-        0 0 14px rgba(0,255,255,0.24);
-}
-
-/* =========================================================
-INPUT
-========================================================= */
-
-#cog-input {
-
-    flex:1;
-
-    min-height:26px;
-
-    max-height:180px;
-
-    resize:none;
-
-    border:none;
-
-    outline:none;
-
-    border-radius:18px;
-
-    background:
-        rgba(18,24,38,0.96);
-
-    border:
-        1px solid rgba(0,255,255,0.12);
-
-    color:white;
-
-    font-size:16px;
-
-    line-height:1.45;
-
-    padding:14px 16px;
-}
-
-/* =========================================================
-SEND
-========================================================= */
-
-#send-btn {
-
-    width:56px;
-
-    height:56px;
-
-    border:none;
-
-    border-radius:18px;
-
-    background:
         linear-gradient(
             135deg,
             #00f5a0,
@@ -1367,22 +1358,61 @@ SEND
 
     color:black;
 
-    font-size:24px;
+    font-size:20px;
 
     font-weight:bold;
 
     cursor:pointer;
 
     transition:0.2s;
+
+    flex-shrink:0;
+}
+
+#send-btn:hover {
+
+    transform:scale(1.03);
+
+    box-shadow:
+        0 0 18px rgba(0,255,255,0.24);
 }
 
 /* =========================================================
-BOTTOM SPACE
+MOBILE
 ========================================================= */
 
-#cog-bottom-space {
+@media (max-width:768px) {
 
-    height:120px;
+    #cog-wrap {
+
+        width:98vw;
+        bottom:4px;
+    }
+
+    #cog-composer {
+
+        padding:6px;
+        gap:6px;
+    }
+
+    .cog-btn {
+
+        width:38px;
+        height:38px;
+        font-size:16px;
+    }
+
+    #send-btn {
+
+        width:42px;
+        height:42px;
+    }
+
+    #cog-input {
+
+        font-size:14px;
+        padding:10px 12px;
+    }
 }
 
 </style>
@@ -1419,6 +1449,7 @@ BOTTOM SPACE
 
         <textarea
             id="cog-input"
+            rows="1"
             placeholder="Írd be a futtatandó témát..."
         ></textarea>
 
@@ -1434,12 +1465,12 @@ BOTTOM SPACE
 
 </div>
 
-<div id="cog-bottom-space"></div>
+<div class="cog-bottom-space"></div>
 
 <script>
 
 /* =========================================================
-TEXTAREA AUTOSIZE
+TEXTAREA
 ========================================================= */
 
 const textarea =
@@ -1447,16 +1478,25 @@ const textarea =
         "cog-input"
     );
 
+/* =========================================================
+AUTOSIZE
+========================================================= */
+
+function autoResize() {
+
+    textarea.style.height =
+        "auto";
+
+    textarea.style.height =
+        Math.min(
+            textarea.scrollHeight,
+            120
+        ) + "px";
+}
+
 textarea.addEventListener(
     "input",
-    () => {
-
-        textarea.style.height =
-            "auto";
-
-        textarea.style.height =
-            textarea.scrollHeight + "px";
-    }
+    autoResize
 );
 
 /* =========================================================
@@ -1507,6 +1547,8 @@ if (
 
         textarea.value +=
             " " + text;
+
+        autoResize();
     };
 
     recognition.onend =
@@ -1559,19 +1601,30 @@ document
 };
 
 /* =========================================================
-SEND
+SUBMIT
 ========================================================= */
 
 function submitPrompt() {
 
     const text =
-        textarea.value;
+        textarea.value.trim();
+
+    if (!text) return;
 
     const hiddenInput =
         window.parent.document
         .querySelector(
             'input[aria-label="runtime_hidden_input"]'
         );
+
+    if (!hiddenInput) {
+
+        console.error(
+            "Hidden input not found"
+        );
+
+        return;
+    }
 
     const nativeSetter =
         Object.getOwnPropertyDescriptor(
@@ -1587,15 +1640,37 @@ function submitPrompt() {
     hiddenInput.dispatchEvent(
         new Event(
             "input",
-            { bubbles:true }
+            {
+                bubbles:true
+            }
         )
     );
 
-    textarea.value = "";
+    hiddenInput.dispatchEvent(
+        new KeyboardEvent(
+            "keydown",
+            {
+                bubbles:true,
+                cancelable:true,
+                key:"Enter",
+                code:"Enter"
+            }
+        )
+    );
 
-    textarea.style.height =
-        "auto";
+    setTimeout(() => {
+
+        textarea.value = "";
+
+        textarea.style.height =
+            "auto";
+
+    }, 120);
 }
+
+/* =========================================================
+SEND BUTTON
+========================================================= */
 
 document
 .getElementById(
@@ -1626,7 +1701,7 @@ textarea.addEventListener(
 
 </script>
 
-""", height=140)
+""", height=120)
 
 # ============================================================
 # EXECUTION ENGINE
@@ -1750,5 +1825,5 @@ if hidden_prompt:
 # ============================================================
 
 st.caption(
-    "COGNITO ENGINE 17.0 PRO — MONOLITH RUNTIME SHELL v10"
+    "COGNITO ENGINE 17.0 PRO 😎"
 )
