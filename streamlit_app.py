@@ -1037,7 +1037,7 @@ if st.session_state.state_history:
 # ============================================================
 # INIT MODULE
 # RUNTIME INPUT SYSTEM
-# MONOLITH RUNTIME SHELL v14 STABLE
+# MONOLITH RUNTIME SHELL v15 STABLE
 # ============================================================
 
 import streamlit as st
@@ -1059,7 +1059,10 @@ if "engine_initialized" not in st.session_state:
     # ========================================================
 
     st.session_state.client = OpenAI(
-        api_key=OPENAI_API_KEY
+        api_key=st.secrets.get(
+            "OPENAI_API_KEY",
+            ""
+        )
     )
 
     # ========================================================
