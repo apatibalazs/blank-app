@@ -1035,25 +1035,33 @@ if st.session_state.state_history:
 # ============================================================================
 
 # ============================================================
-# COGNITO RUNTIME UI v6
-# FULL CHATGPT-LIKE CYBERPUNK RUNTIME
-# SINGLE COMPOSER SYSTEM
+# COGNITO RUNTIME SHELL v7
+# REAL FRONTEND / BACKEND BRIDGE
+# CHATGPT-LIKE CYBERPUNK INTERFACE
 # ============================================================
 
-import tempfile
-import hashlib
+import streamlit as st
+import streamlit.components.v1 as components
+
 import json
-import base64
+import hashlib
+import fitz
 
 # ============================================================
-# SESSION STATE INIT
+# SESSION STATE
 # ============================================================
 
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
 
-if "parsed_file_content" not in st.session_state:
-    st.session_state.parsed_file_content = ""
+if "runtime_prompt" not in st.session_state:
+    st.session_state.runtime_prompt = ""
+
+if "runtime_uploaded_text" not in st.session_state:
+    st.session_state.runtime_uploaded_text = ""
+
+if "runtime_audio_text" not in st.session_state:
+    st.session_state.runtime_audio_text = ""
 
 if "last_uploaded_file" not in st.session_state:
     st.session_state.last_uploaded_file = None
@@ -1061,11 +1069,8 @@ if "last_uploaded_file" not in st.session_state:
 if "last_audio_hash" not in st.session_state:
     st.session_state.last_audio_hash = None
 
-if "composer_text" not in st.session_state:
-    st.session_state.composer_text = ""
-
 # ============================================================
-# CYBERPUNK GLOBAL CSS
+# GLOBAL CSS
 # ============================================================
 
 st.markdown("""
@@ -1075,17 +1080,19 @@ st.markdown("""
 GLOBAL
 ========================================================= */
 
-html, body, [class*="css"] {
+html,
+body,
+[data-testid="stAppViewContainer"] {
 
     background:
         radial-gradient(
             circle at top,
-            #09111f 0%,
-            #050816 55%,
+            #08111f 0%,
+            #040816 60%,
             #02030a 100%
         );
 
-    color: white;
+    color:white;
 }
 
 /* =========================================================
@@ -1094,36 +1101,31 @@ CHAT MESSAGE
 
 [data-testid="stChatMessage"] {
 
-    border-radius: 18px;
-
-    padding: 16px;
-
-    margin-bottom: 18px;
+    background:
+        rgba(12,18,28,0.74);
 
     border:
         1px solid rgba(0,255,255,0.12);
 
-    background:
-        rgba(12,18,28,0.72);
+    border-radius:20px;
 
-    backdrop-filter:
-        blur(12px);
+    padding:16px;
+
+    margin-bottom:18px;
+
+    backdrop-filter:blur(14px);
 
     box-shadow:
         0 0 24px rgba(0,255,255,0.04);
 }
 
 /* =========================================================
-CHAT INPUT HIDE
+HIDE DEFAULT STREAMLIT INPUTS
 ========================================================= */
 
 [data-testid="stChatInput"] {
-    display: none;
+    display:none;
 }
-
-/* =========================================================
-STREAMLIT BUTTON HIDE
-========================================================= */
 
 .stButton {
     display:none;
@@ -1135,125 +1137,165 @@ FILE UPLOADER
 
 [data-testid="stFileUploader"] {
 
-    border-radius: 16px;
+    position:fixed;
 
-    border:
-        1px solid rgba(0,255,255,0.14);
+    bottom:95px;
 
-    background:
-        rgba(15,20,35,0.62);
+    left:20px;
 
-    padding: 10px;
+    width:1px;
+
+    height:1px;
+
+    opacity:0;
+
+    z-index:-999;
 }
 
 /* =========================================================
-CUSTOM COMPOSER
+AUDIO INPUT
 ========================================================= */
 
-.cognito-composer-wrap {
+[data-testid="stAudioInput"] {
 
-    position: fixed;
+    position:fixed;
 
-    bottom: 18px;
+    bottom:95px;
 
-    left: 50%;
+    left:20px;
 
-    transform: translateX(-50%);
+    width:1px;
 
-    width: min(920px, 96vw);
+    height:1px;
 
-    z-index: 99999;
+    opacity:0;
+
+    z-index:-999;
 }
 
-.cognito-composer {
+/* =========================================================
+COMPOSER WRAP
+========================================================= */
 
-    display: flex;
+.cog-shell-wrap {
 
-    align-items: center;
+    position:fixed;
 
-    gap: 10px;
+    bottom:18px;
 
-    padding: 12px;
+    left:50%;
 
-    border-radius: 24px;
+    transform:translateX(-50%);
 
-    border:
-        1px solid rgba(0,255,255,0.14);
+    width:min(920px,96vw);
+
+    z-index:999999;
+}
+
+/* =========================================================
+COMPOSER
+========================================================= */
+
+.cog-shell {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
 
     background:
-        rgba(12,18,30,0.88);
-
-    backdrop-filter:
-        blur(16px);
-
-    box-shadow:
-        0 0 32px rgba(0,255,255,0.08);
-}
-
-.cognito-icon-btn {
-
-    width: 42px;
-
-    height: 42px;
-
-    border-radius: 12px;
+        rgba(10,16,28,0.92);
 
     border:
         1px solid rgba(0,255,255,0.12);
 
+    border-radius:24px;
+
+    padding:12px;
+
+    backdrop-filter:blur(18px);
+
+    box-shadow:
+        0 0 34px rgba(0,255,255,0.08);
+}
+
+/* =========================================================
+ICON BUTTONS
+========================================================= */
+
+.cog-btn {
+
+    width:44px;
+
+    height:44px;
+
+    border-radius:14px;
+
+    border:
+        1px solid rgba(0,255,255,0.14);
+
     background:
         rgba(0,255,255,0.05);
 
-    color: white;
+    color:white;
 
-    font-size: 18px;
+    font-size:18px;
 
-    cursor: pointer;
+    cursor:pointer;
 
-    transition: 0.2s;
+    transition:0.2s;
 }
 
-.cognito-icon-btn:hover {
+.cog-btn:hover {
 
     background:
         rgba(0,255,255,0.14);
 
     box-shadow:
-        0 0 12px rgba(0,255,255,0.14);
+        0 0 12px rgba(0,255,255,0.18);
 }
 
-.cognito-input {
+/* =========================================================
+INPUT
+========================================================= */
 
-    flex: 1;
+.cog-input {
 
-    border: none;
+    flex:1;
 
-    outline: none;
+    border:none;
+
+    outline:none;
+
+    border-radius:18px;
 
     background:
-        rgba(20,25,40,0.92);
-
-    color: white;
-
-    border-radius: 18px;
-
-    padding: 14px 16px;
-
-    font-size: 16px;
+        rgba(18,24,38,0.96);
 
     border:
         1px solid rgba(0,255,255,0.10);
+
+    color:white;
+
+    font-size:16px;
+
+    padding:14px 16px;
 }
 
-.cognito-send {
+/* =========================================================
+SEND BUTTON
+========================================================= */
 
-    width: 48px;
+.cog-send {
 
-    height: 48px;
+    width:52px;
 
-    border-radius: 16px;
+    height:52px;
 
-    border: none;
+    border:none;
+
+    border-radius:18px;
 
     background:
         linear-gradient(
@@ -1262,86 +1304,167 @@ CUSTOM COMPOSER
             #00bbff
         );
 
-    color: black;
+    color:black;
 
-    font-size: 22px;
+    font-size:24px;
 
-    font-weight: bold;
+    font-weight:bold;
 
-    cursor: pointer;
+    cursor:pointer;
 
-    transition: 0.2s;
+    transition:0.2s;
 }
 
-.cognito-send:hover {
+.cog-send:hover {
 
-    transform: scale(1.05);
+    transform:scale(1.05);
 
     box-shadow:
-        0 0 18px rgba(0,255,255,0.28);
+        0 0 20px rgba(0,255,255,0.28);
 }
 
 /* =========================================================
 COPY BUTTON
 ========================================================= */
 
-.cognito-copy-btn {
+.cog-copy {
 
     background:
         rgba(0,255,255,0.08);
 
     border:
-        1px solid rgba(0,255,255,0.18);
+        1px solid rgba(0,255,255,0.16);
 
-    color: white;
+    color:white;
 
-    border-radius: 10px;
+    border-radius:10px;
 
-    padding: 6px 10px;
+    padding:6px 10px;
 
-    font-size: 14px;
-
-    cursor: pointer;
+    cursor:pointer;
 }
 
 /* =========================================================
-BOTTOM SPACER
+BOTTOM SPACE
 ========================================================= */
 
-.cognito-bottom-space {
+.cog-bottom-space {
 
-    height: 140px;
+    height:140px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# FILE INPUT
+# HIDDEN REAL FILE INPUT
 # ============================================================
 
 uploaded_file = st.file_uploader(
-    "📎 Upload",
-    type=[
-        "txt",
-        "pdf",
-        "png",
-        "jpg",
-        "jpeg"
-    ],
-    key="cognito_upload_v6"
+    "hidden upload",
+    type=["txt", "pdf", "png", "jpg", "jpeg"],
+    key="hidden_runtime_upload"
 )
 
 # ============================================================
-# AUDIO INPUT
+# HIDDEN REAL AUDIO INPUT
 # ============================================================
 
 audio_file = st.audio_input(
-    "🎤 Voice",
-    key="cognito_audio_v6"
+    "hidden audio",
+    key="hidden_runtime_audio"
 )
 
-voice_prompt = ""
+# ============================================================
+# FILE PROCESSING
+# ============================================================
+
+if uploaded_file is not None:
+
+    current_file_id = (
+        f"{uploaded_file.name}_{uploaded_file.size}"
+    )
+
+    if (
+        st.session_state.last_uploaded_file
+        != current_file_id
+    ):
+
+        st.session_state.last_uploaded_file = (
+            current_file_id
+        )
+
+        file_name = uploaded_file.name.lower()
+
+        parsed_text = ""
+
+        try:
+
+            # TXT
+            if file_name.endswith(".txt"):
+
+                parsed_text = (
+                    uploaded_file.read().decode(
+                        "utf-8",
+                        errors="ignore"
+                    )
+                )
+
+            # PDF
+            elif file_name.endswith(".pdf"):
+
+                pdf_bytes = uploaded_file.read()
+
+                pdf = fitz.open(
+                    stream=pdf_bytes,
+                    filetype="pdf"
+                )
+
+                pages = []
+
+                for page in pdf:
+
+                    pages.append(
+                        page.get_text()
+                    )
+
+                parsed_text = (
+                    "\n".join(pages)
+                )
+
+            # IMAGE
+            elif (
+                file_name.endswith(".png")
+                or file_name.endswith(".jpg")
+                or file_name.endswith(".jpeg")
+            ):
+
+                st.image(
+                    uploaded_file,
+                    use_container_width=True
+                )
+
+                parsed_text = (
+                    "[IMAGE INPUT DETECTED]"
+                )
+
+            st.session_state.runtime_uploaded_text = (
+                parsed_text
+            )
+
+            st.toast(
+                "📎 File processed"
+            )
+
+        except Exception as e:
+
+            st.error(
+                f"FILE ERROR: {e}"
+            )
+
+else:
+
+    st.session_state.last_uploaded_file = None
 
 # ============================================================
 # AUDIO PROCESSING
@@ -1365,7 +1488,7 @@ if audio_file is not None:
         )
 
         with st.spinner(
-            "🎧 Audio feldolgozás..."
+            "🎧 Audio processing..."
         ):
 
             transcript = (
@@ -1375,10 +1498,12 @@ if audio_file is not None:
                 )
             )
 
-            voice_prompt = transcript.text
+            st.session_state.runtime_audio_text = (
+                transcript.text
+            )
 
-            st.session_state.composer_text = (
-                voice_prompt
+            st.toast(
+                "🎤 Voice processed"
             )
 
 else:
@@ -1386,114 +1511,10 @@ else:
     st.session_state.last_audio_hash = None
 
 # ============================================================
-# FILE PARSING
-# ============================================================
-
-if uploaded_file is not None:
-
-    current_file_id = (
-        f"{uploaded_file.name}_{uploaded_file.size}"
-    )
-
-    if (
-        st.session_state.last_uploaded_file
-        != current_file_id
-    ):
-
-        st.session_state.last_uploaded_file = (
-            current_file_id
-        )
-
-        file_name = uploaded_file.name.lower()
-
-        try:
-
-            parsed_file_content = ""
-
-            # ====================================================
-            # TXT
-            # ====================================================
-
-            if file_name.endswith(".txt"):
-
-                parsed_file_content = (
-                    uploaded_file.read().decode(
-                        "utf-8",
-                        errors="ignore"
-                    )
-                )
-
-            # ====================================================
-            # PDF
-            # ====================================================
-
-            elif file_name.endswith(".pdf"):
-
-                import fitz
-
-                pdf_bytes = uploaded_file.read()
-
-                pdf = fitz.open(
-                    stream=pdf_bytes,
-                    filetype="pdf"
-                )
-
-                pages = []
-
-                for page in pdf:
-
-                    pages.append(
-                        page.get_text()
-                    )
-
-                parsed_file_content = (
-                    "\n".join(pages)
-                )
-
-            # ====================================================
-            # IMAGE
-            # ====================================================
-
-            elif (
-                file_name.endswith(".png")
-                or file_name.endswith(".jpg")
-                or file_name.endswith(".jpeg")
-            ):
-
-                st.image(
-                    uploaded_file,
-                    use_container_width=True
-                )
-
-                parsed_file_content = (
-                    "[IMAGE INPUT DETECTED]"
-                )
-
-            st.session_state.parsed_file_content = (
-                parsed_file_content
-            )
-
-        except Exception as e:
-
-            st.error(
-                f"File parse error: {e}"
-            )
-
-else:
-
-    st.session_state.last_uploaded_file = None
-
-parsed_file_content = (
-    st.session_state.parsed_file_content
-)
-
-# ============================================================
 # CHAT HISTORY
 # ============================================================
 
-for idx, msg in enumerate(
-    st.session_state.chat_messages
-):
+for msg in st.session_state.chat_messages:
 
     with st.chat_message(
         msg["role"],
@@ -1504,30 +1525,27 @@ for idx, msg in enumerate(
             msg["content"]
         )
 
-        # ====================================================
-        # COPY BUTTON
-        # ====================================================
-
+        # COPY
         if msg["role"] == "assistant":
 
-            safe_out_json = json.dumps(
+            safe_json = json.dumps(
                 msg["content"]
             )
 
-            copy_button_html = f"""
+            copy_html = f"""
             <div style="
             display:flex;
             justify-content:flex-end;
             margin-top:10px;
             ">
             <button
-            class="cognito-copy-btn"
+            class="cog-copy"
             onclick='
-            navigator.clipboard.writeText({safe_out_json});
+            navigator.clipboard.writeText({safe_json});
             this.innerText="✅";
             setTimeout(() => {{
-            this.innerText="📋";
-            }}, 1200);
+                this.innerText="📋";
+            }},1200);
             '
             >
             📋
@@ -1535,35 +1553,98 @@ for idx, msg in enumerate(
             </div>
             """
 
-            st.components.v1.html(
-                copy_button_html,
+            components.html(
+                copy_html,
                 height=42
             )
 
 # ============================================================
-# CUSTOM COMPOSER
+# REAL INPUT BRIDGE
 # ============================================================
 
-st.markdown(f"""
-<div class="cognito-composer-wrap">
+runtime_input = st.text_input(
+    "hidden runtime bridge",
+    key="hidden_runtime_bridge",
+    label_visibility="collapsed"
+)
 
-<div class="cognito-composer">
+# ============================================================
+# FRONTEND RUNTIME SHELL
+# ============================================================
 
-<button class="cognito-icon-btn">
+components.html("""
+<div class="cog-shell-wrap">
+
+<div class="cog-shell">
+
+<button
+class="cog-btn"
+onclick="
+window.parent.document
+.querySelector('[data-testid=stFileUploader] button')
+.click();
+"
+>
 📎
 </button>
 
-<button class="cognito-icon-btn">
+<button
+class="cog-btn"
+onclick="
+window.parent.document
+.querySelector('[data-testid=stAudioInput] button')
+.click();
+"
+>
 🎤
 </button>
 
 <input
-class="cognito-input"
+id="cog_runtime_input"
+class="cog-input"
 placeholder="Írd be a futtatandó témát..."
-value="{st.session_state.composer_text}"
 />
 
-<button class="cognito-send">
+<button
+class="cog-send"
+onclick="
+const val =
+document.getElementById(
+'cog_runtime_input'
+).value;
+
+const inputs =
+window.parent.document
+.querySelectorAll('input');
+
+inputs.forEach(el => {
+
+if (
+el.getAttribute('aria-label')
+=== 'hidden runtime bridge'
+) {
+
+const nativeInputValueSetter =
+Object.getOwnPropertyDescriptor(
+window.HTMLInputElement.prototype,
+'value'
+).set;
+
+nativeInputValueSetter.call(
+el,
+val
+);
+
+el.dispatchEvent(
+new Event(
+'input',
+{ bubbles:true }
+)
+);
+}
+});
+"
+>
 ➤
 </button>
 
@@ -1571,43 +1652,37 @@ value="{st.session_state.composer_text}"
 
 </div>
 
-<div class="cognito-bottom-space"></div>
-""", unsafe_allow_html=True)
-
-# ============================================================
-# REAL INPUT
-# ============================================================
-
-prompt = st.chat_input(
-    "Írd be a futtatandó témát...",
-    key="cognito_hidden_input_v6"
-)
-
-# ============================================================
-# VOICE FALLBACK
-# ============================================================
-
-if (
-    voice_prompt
-    and
-    not prompt
-):
-
-    prompt = voice_prompt
+<div class="cog-bottom-space"></div>
+""", height=120)
 
 # ============================================================
 # EXECUTION ENGINE
 # ============================================================
 
-if prompt:
+if runtime_input:
 
-    final_user_input = prompt
+    final_input = runtime_input
 
-    if parsed_file_content:
+    # AUDIO MERGE
+    if (
+        st.session_state.runtime_audio_text
+    ):
 
-        final_user_input += (
-            "\n\n[PARSED FILE CONTENT]\n\n"
-            + parsed_file_content
+        final_input += (
+            "\n\n[VOICE INPUT]\n\n"
+            +
+            st.session_state.runtime_audio_text
+        )
+
+    # FILE MERGE
+    if (
+        st.session_state.runtime_uploaded_text
+    ):
+
+        final_input += (
+            "\n\n[FILE INPUT]\n\n"
+            +
+            st.session_state.runtime_uploaded_text
         )
 
     # ========================================================
@@ -1615,18 +1690,9 @@ if prompt:
     # ========================================================
 
     st.session_state.chat_messages.append({
-        "role": "user",
-        "content": final_user_input
+        "role":"user",
+        "content":final_input
     })
-
-    with st.chat_message(
-        "user",
-        avatar="👤"
-    ):
-
-        st.markdown(
-            final_user_input
-        )
 
     # ========================================================
     # STATUS
@@ -1638,12 +1704,12 @@ if prompt:
     ) as status:
 
         pat_data = pat_eng.scan(
-            final_user_input
+            final_input
         )
 
         new_json, comp_use = (
             comp.compile_state(
-                final_user_input,
+                final_input,
                 pat_data
             )
         )
@@ -1661,7 +1727,7 @@ if prompt:
         )
 
         status.update(
-            label="✅ Kognitív állapotfrissítés kész",
+            label="✅ Runtime state updated",
             state="complete"
         )
 
@@ -1682,98 +1748,51 @@ if prompt:
     )
 
     # ========================================================
-    # ASSISTANT RESPONSE
+    # MODEL
     # ========================================================
 
-    with st.chat_message(
-        "assistant",
-        avatar="◼️"
-    ):
-
-        response_placeholder = st.empty()
-
-        response = (
-            client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": final_prompt
-                    },
-                    {
-                        "role": "user",
-                        "content": final_user_input
-                    }
-                ]
-            )
+    response = (
+        client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role":"system",
+                    "content":final_prompt
+                },
+                {
+                    "role":"user",
+                    "content":final_input
+                }
+            ]
         )
+    )
 
-        out = (
-            response
-            .choices[0]
-            .message.content
-        )
+    out = (
+        response
+        .choices[0]
+        .message.content
+    )
 
-        update_cost(
-            response.usage
-        )
-
-        response_placeholder.markdown(
-            out
-        )
-
-        # ====================================================
-        # COPY BUTTON
-        # ====================================================
-
-        safe_out_json = json.dumps(out)
-
-        copy_button_html = f"""
-        <div style="
-        display:flex;
-        justify-content:flex-end;
-        margin-top:10px;
-        ">
-        <button
-        class="cognito-copy-btn"
-        onclick='
-        navigator.clipboard.writeText({safe_out_json});
-        this.innerText="✅";
-        setTimeout(() => {{
-        this.innerText="📋";
-        }}, 1200);
-        '
-        >
-        📋
-        </button>
-        </div>
-        """
-
-        st.components.v1.html(
-            copy_button_html,
-            height=42
-        )
+    update_cost(
+        response.usage
+    )
 
     # ========================================================
     # SAVE ASSISTANT
     # ========================================================
 
     st.session_state.chat_messages.append({
-        "role": "assistant",
-        "content": out
+        "role":"assistant",
+        "content":out
     })
 
     # ========================================================
-    # CLEAR FILE CACHE
+    # CLEAR
     # ========================================================
 
-    st.session_state.parsed_file_content = ""
-
-    st.session_state.composer_text = ""
-
-    # ========================================================
-    # RERUN
-    # ========================================================
+    st.session_state.runtime_uploaded_text = ""
+    st.session_state.runtime_audio_text = ""
+    st.session_state.hidden_runtime_bridge = ""
 
     st.rerun()
 
@@ -1782,5 +1801,5 @@ if prompt:
 # ============================================================
 
 st.caption(
-    "COGNITO ENGINE — Cyberpunk Runtime v6"
+    "COGNITO ENGINE PRO — Runtime Shell v7"
 )
