@@ -1033,8 +1033,8 @@ if st.session_state.state_history:
 
 # ============================================================
 # INIT MODULE
-# COGNITO RUNTIME SHELL v24.2
-# MOBILE UI STABLE BUILD
+# COGNITO RUNTIME SHELL v24.3
+# MOBILE UX + UPLOAD + STATUS BUILD
 # ============================================================
 
 import json
@@ -1208,20 +1208,24 @@ HIDE STREAMLIT INPUTS
 }
 
 /* =========================================================
-HIDE FILE UPLOADER
+KEEP FILE INPUT CLICKABLE
 ========================================================= */
 
 [data-testid="stFileUploader"] {
 
-    position:absolute !important;
+    position:fixed !important;
 
-    left:-9999px !important;
+    bottom:0 !important;
+
+    left:0 !important;
 
     width:1px !important;
 
     height:1px !important;
 
-    opacity:0.01 !important;
+    opacity:0.001 !important;
+
+    z-index:999999 !important;
 }
 
 /* =========================================================
@@ -1289,7 +1293,7 @@ BOTTOM SPACE
 
 .cog-bottom-space {
 
-    height:140px;
+    height:160px;
 }
 
 </style>
@@ -1414,7 +1418,7 @@ COMPOSER
 
     display:flex;
 
-    align-items:stretch;
+    align-items:flex-end;
 
     gap:6px;
 
@@ -1466,8 +1470,6 @@ BUTTONS
     cursor:pointer;
 
     flex-shrink:0;
-
-    align-self:flex-end;
 }
 
 /* =========================================================
@@ -1482,9 +1484,9 @@ TEXTAREA
 
     min-width:0;
 
-    height:54px;
+    min-height:54px;
 
-    max-height:160px;
+    max-height:220px;
 
     resize:none;
 
@@ -1511,6 +1513,23 @@ TEXTAREA
     overflow-y:hidden;
 
     box-sizing:border-box;
+}
+
+/* =========================================================
+STATUS
+========================================================= */
+
+#runtime-status {
+
+    color:#00ffd0;
+
+    font-size:12px;
+
+    padding-left:6px;
+
+    min-height:18px;
+
+    opacity:0.8;
 }
 
 /* =========================================================
@@ -1543,8 +1562,6 @@ SEND BUTTON
     cursor:pointer;
 
     flex-shrink:0;
-
-    align-self:flex-end;
 }
 
 </style>
@@ -1592,6 +1609,8 @@ SEND BUTTON
 
     </div>
 
+    <div id="runtime-status"></div>
+
 </div>
 
 <div class="cog-bottom-space"></div>
@@ -1607,6 +1626,11 @@ const textarea =
         "cog-input"
     );
 
+const status =
+    document.getElementById(
+        "runtime-status"
+    );
+
 /* =========================================================
 AUTOSIZE
 ========================================================= */
@@ -1616,24 +1640,22 @@ function autoResize() {
     textarea.style.height =
         "auto";
 
-    textarea.style.height =
-        Math.min(
-            textarea.scrollHeight,
-            160
-        ) + "px";
+    requestAnimationFrame(() => {
 
-    if (
-        textarea.scrollHeight > 160
-    ) {
+        const nextHeight =
+            Math.min(
+                textarea.scrollHeight,
+                220
+            );
 
-        textarea.style.overflowY =
-            "auto";
-    }
-    else {
+        textarea.style.height =
+            nextHeight + "px";
 
         textarea.style.overflowY =
-            "hidden";
-    }
+            textarea.scrollHeight > 220
+            ? "auto"
+            : "hidden";
+    });
 }
 
 textarea.addEventListener(
@@ -1665,6 +1687,19 @@ if (
 
     recognition.interimResults = false;
 
+    recognition.onstart =
+        function() {
+
+        status.innerText =
+            "🎤 figyelek...";
+    };
+
+    recognition.onend =
+        function() {
+
+        status.innerText = "";
+    };
+
     recognition.onresult =
         function(event) {
 
@@ -1676,6 +1711,9 @@ if (
             " " + text;
 
         autoResize();
+
+        status.innerText =
+            "🎤 szöveg felismerve";
     };
 }
 
@@ -1699,6 +1737,9 @@ document
     "upload-btn"
 )
 .onclick = function() {
+
+    status.innerText =
+        "📎 fájl kiválasztása...";
 
     const inputs =
         window.parent.document
@@ -1725,6 +1766,9 @@ function submitPrompt() {
         textarea.value.trim();
 
     if (!text) return;
+
+    status.innerText =
+        "⚙️ futtatás...";
 
     const hiddenInput =
         window.parent.document
@@ -1792,6 +1836,8 @@ function submitPrompt() {
         textarea.style.height =
             "54px";
 
+        status.innerText = "";
+
         requestAnimationFrame(
             autoResize
         );
@@ -1832,7 +1878,7 @@ textarea.addEventListener(
 
 </script>
 
-""", height=150)
+""", height=180)
 
 # ============================================================
 # EXECUTION ENGINE
