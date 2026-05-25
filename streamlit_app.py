@@ -1439,99 +1439,52 @@ if execute_clicked:
 
         st.session_state.input_text = ""
 
-        
+   # ============================================================
+# CHAT RUNTIME UI
 # ============================================================
-# CHAT HISTORY RENDER
-# ============================================================
+
+if "chat_messages" not in st.session_state:
+    st.session_state.chat_messages = []
 
 st.markdown("---")
 
-for msg in st.session_state.chat_messages:
+# ============================================================
+# CHAT HISTORY
+# ============================================================
 
-    if msg["role"] == "user":
+for idx, msg in enumerate(st.session_state.chat_messages):
 
-        with st.chat_message(
-            "user",
-            avatar="👤"
-        ):
-            st.markdown(msg["content"])
+    with st.chat_message(
+        msg["role"],
+        avatar="👤" if msg["role"] == "user" else "◼️"
+    ):
 
-    elif msg["role"] == "assistant":
+        st.markdown(msg["content"])
 
-        with st.chat_message(
-            "assistant",
-            avatar="◼️"
-        ):
+        # ====================================================
+        # COPY BUTTON
+        # ====================================================
 
-            st.markdown(msg["content"])
+        if msg["role"] == "assistant":
 
-            # ====================================================
-            # COPY BUTTON
-            # ====================================================
-
-            safe_output = (
-                msg["content"]
-                .replace("\\", "\\\\")
-                .replace("`", "\\`")
-                .replace("$", "\\$")
-            )
-
-            copy_html = f"""
-            <div style="margin-top:20px;">
-                <button
-                    onclick="navigator.clipboard.writeText(`{safe_output}`)"
-                    style="
-                        width:100%;
-                        padding:16px;
-                        border:none;
-                        border-radius:14px;
-                        font-size:20px;
-                        font-weight:bold;
-                        cursor:pointer;
-                        background:linear-gradient(90deg,#00f5a0,#00bbff);
-                        color:black;
-                        margin-top:15px;
-                        margin-bottom:10px;
-                        box-shadow:0 0 20px rgba(0,255,200,0.45);
-                    ">
-                    📋 COPY OUTPUT
-                </button>
-            </div>
-            """
-
-            st.components.v1.html(
-                copy_html,
-                height=90
+            st.code(
+                msg["content"],
+                language=None
             )
 
 # ============================================================
-# INPUT AREA
+# CHAT INPUT
 # ============================================================
 
-st.markdown("### RENDSZER-INPUT")
-
-user_query = st.text_area(
-    "",
-    key="cognito_main_input_v4",
-    height=220,
-    placeholder="Írd be a futtatandó témát..."
-)
-
-# ============================================================
-# EXECUTION BUTTON
-# ============================================================
-
-execute_clicked = st.button(
-    "⚡ EXECUTE COGNITIVE PIPELINE",
-    key="cognito_execute_v4",
-    use_container_width=True
+prompt = st.chat_input(
+    "Írd be a futtatandó témát..."
 )
 
 # ============================================================
 # EXECUTION ENGINE
 # ============================================================
 
-if execute_clicked and user_query.strip():
+if prompt:
 
     # ========================================================
     # SAVE USER MESSAGE
@@ -1539,8 +1492,14 @@ if execute_clicked and user_query.strip():
 
     st.session_state.chat_messages.append({
         "role": "user",
-        "content": user_query
+        "content": prompt
     })
+
+    with st.chat_message(
+        "user",
+        avatar="👤"
+    ):
+        st.markdown(prompt)
 
     # ========================================================
     # COGNITIVE STATUS
@@ -1552,11 +1511,11 @@ if execute_clicked and user_query.strip():
     ) as status:
 
         pat_data = pat_eng.scan(
-            user_query
+            prompt
         )
 
         new_json, comp_use = comp.compile_state(
-            user_query,
+            prompt,
             pat_data
         )
 
@@ -1579,7 +1538,7 @@ if execute_clicked and user_query.strip():
     # PROMPT BUILD
     # ========================================================
 
-    prompt = WritingEngine.generate_prompt(
+    final_prompt = WritingEngine.generate_prompt(
         run_state,
         run_mode,
         web_mode,
@@ -1593,23 +1552,39 @@ if execute_clicked and user_query.strip():
     # MODEL EXECUTION
     # ========================================================
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "system",
-                "content": prompt
-            },
-            {
-                "role": "user",
-                "content": user_query
-            }
-        ]
-    )
+    with st.chat_message(
+        "assistant",
+        avatar="◼️"
+    ):
 
-    out = response.choices[0].message.content
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": final_prompt
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
 
-    update_cost(response.usage)
+        out = response.choices[0].message.content
+
+        update_cost(response.usage)
+
+        st.markdown(out)
+
+        # ====================================================
+        # NATIVE COPY
+        # ====================================================
+
+        st.code(
+            out,
+            language=None
+        )
 
     # ========================================================
     # SAVE ASSISTANT MESSAGE
