@@ -1033,8 +1033,9 @@ if st.session_state.state_history:
 
 # ============================================================
 # INIT MODULE
-# COGNITO RUNTIME SHELL v24.3
-# MOBILE UX + UPLOAD + STATUS BUILD
+# COGNITO RUNTIME SHELL v25
+# CHATGPT-STYLE MULTIMODAL RUNTIME
+# FULL MOBILE UX BUILD
 # ============================================================
 
 import json
@@ -1077,7 +1078,7 @@ if "uploaded_file_text" not in st.session_state:
     st.session_state.uploaded_file_text = ""
 
 # ============================================================
-# HIDDEN FILE UPLOADER
+# REAL FILE UPLOADER
 # ============================================================
 
 uploaded_file = st.file_uploader(
@@ -1208,22 +1209,22 @@ HIDE STREAMLIT INPUTS
 }
 
 /* =========================================================
-KEEP FILE INPUT CLICKABLE
+REAL MOBILE FILE OVERLAY
 ========================================================= */
 
 [data-testid="stFileUploader"] {
 
     position:fixed !important;
 
-    bottom:0 !important;
+    bottom:18px !important;
 
-    left:0 !important;
+    left:12px !important;
 
-    width:1px !important;
+    width:44px !important;
 
-    height:1px !important;
+    height:44px !important;
 
-    opacity:0.001 !important;
+    opacity:0.01 !important;
 
     z-index:999999 !important;
 }
@@ -1293,7 +1294,7 @@ BOTTOM SPACE
 
 .cog-bottom-space {
 
-    height:160px;
+    height:180px;
 }
 
 </style>
@@ -1333,54 +1334,6 @@ for msg in st.session_state.chat_messages:
             msg["content"]
         )
 
-        if msg["role"] == "assistant":
-
-            safe_text = json.dumps(
-                msg["content"]
-            )
-
-            components.html(f"""
-            <div style="
-                display:flex;
-                justify-content:flex-end;
-                margin-top:10px;
-            ">
-
-            <button
-                onclick='
-                    navigator.clipboard.writeText({safe_text});
-
-                    this.innerText="✅";
-
-                    setTimeout(() => {{
-                        this.innerText="📋";
-                    }},1200);
-                '
-
-                style="
-                    background:
-                        rgba(0,255,255,0.08);
-
-                    border:
-                        1px solid rgba(0,255,255,0.18);
-
-                    color:white;
-
-                    border-radius:10px;
-
-                    padding:6px 10px;
-
-                    cursor:pointer;
-
-                    font-size:13px;
-                "
-            >
-                📋
-            </button>
-
-            </div>
-            """, height=46)
-
 # ============================================================
 # FRONTEND SHELL
 # ============================================================
@@ -1405,7 +1358,7 @@ WRAP
 
     width:min(920px,96vw);
 
-    z-index:999999;
+    z-index:999998;
 }
 
 /* =========================================================
@@ -1416,17 +1369,21 @@ COMPOSER
 
     width:100%;
 
-    display:flex;
+    display:grid;
 
-    align-items:flex-end;
+    grid-template-columns:
+        44px
+        44px
+        1fr
+        52px;
+
+    align-items:end;
 
     gap:6px;
 
     padding:8px;
 
-    min-height:76px;
-
-    border-radius:26px;
+    border-radius:28px;
 
     background:
         rgba(8,14,24,0.96);
@@ -1444,7 +1401,7 @@ COMPOSER
 }
 
 /* =========================================================
-BUTTONS
+BLACK FAB
 ========================================================= */
 
 .cog-btn {
@@ -1455,13 +1412,17 @@ BUTTONS
 
     border:none;
 
-    border-radius:14px;
+    border-radius:999px;
 
     background:
-        rgba(0,255,255,0.06);
+        radial-gradient(
+            circle,
+            #222 0%,
+            #050505 100%
+        );
 
     border:
-        1px solid rgba(0,255,255,0.16);
+        1px solid rgba(255,255,255,0.08);
 
     color:white;
 
@@ -1469,7 +1430,8 @@ BUTTONS
 
     cursor:pointer;
 
-    flex-shrink:0;
+    box-shadow:
+        0 0 14px rgba(0,0,0,0.35);
 }
 
 /* =========================================================
@@ -1478,9 +1440,7 @@ TEXTAREA
 
 #cog-input {
 
-    flex:1;
-
-    width:100%;
+    display:block;
 
     min-width:0;
 
@@ -1494,13 +1454,13 @@ TEXTAREA
 
     outline:none;
 
-    border-radius:18px;
+    border-radius:22px;
 
     background:
         rgba(18,24,38,0.96);
 
     border:
-        1px solid rgba(0,255,255,0.10);
+        1px solid rgba(255,255,255,0.08);
 
     color:white;
 
@@ -1516,23 +1476,6 @@ TEXTAREA
 }
 
 /* =========================================================
-STATUS
-========================================================= */
-
-#runtime-status {
-
-    color:#00ffd0;
-
-    font-size:12px;
-
-    padding-left:6px;
-
-    min-height:18px;
-
-    opacity:0.8;
-}
-
-/* =========================================================
 SEND BUTTON
 ========================================================= */
 
@@ -1544,7 +1487,7 @@ SEND BUTTON
 
     border:none;
 
-    border-radius:18px;
+    border-radius:999px;
 
     background:
         linear-gradient(
@@ -1561,7 +1504,76 @@ SEND BUTTON
 
     cursor:pointer;
 
-    flex-shrink:0;
+    box-shadow:
+        0 0 18px rgba(0,255,200,0.25);
+}
+
+/* =========================================================
+STATUS
+========================================================= */
+
+#runtime-status {
+
+    color:#00ffd0;
+
+    font-size:12px;
+
+    padding-left:8px;
+
+    min-height:18px;
+
+    opacity:0.8;
+
+    margin-top:6px;
+}
+
+/* =========================================================
+WAVEFORM
+========================================================= */
+
+#waveform {
+
+    display:none;
+
+    align-items:center;
+
+    gap:3px;
+
+    height:26px;
+
+    padding-left:8px;
+}
+
+#waveform span {
+
+    width:4px;
+
+    height:10px;
+
+    border-radius:999px;
+
+    background:#00ffd0;
+
+    animation:wave 1s infinite ease-in-out;
+}
+
+#waveform span:nth-child(2) {
+    animation-delay:0.15s;
+}
+
+#waveform span:nth-child(3) {
+    animation-delay:0.30s;
+}
+
+#waveform span:nth-child(4) {
+    animation-delay:0.45s;
+}
+
+@keyframes wave {
+
+    0%   { height:8px; opacity:0.5; }
+    50%  { height:28px; opacity:1; }
+    100% { height:8px; opacity:0.5; }
 }
 
 </style>
@@ -1577,7 +1589,7 @@ SEND BUTTON
             id="upload-btn"
             type="button"
         >
-            📎
+            ⬤
         </button>
 
         <!-- MIC -->
@@ -1609,7 +1621,20 @@ SEND BUTTON
 
     </div>
 
+    <!-- STATUS -->
+
     <div id="runtime-status"></div>
+
+    <!-- WAVEFORM -->
+
+    <div id="waveform">
+
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+
+    </div>
 
 </div>
 
@@ -1630,6 +1655,55 @@ const status =
     document.getElementById(
         "runtime-status"
     );
+
+const waveform =
+    document.getElementById(
+        "waveform"
+    );
+
+const micBtn =
+    document.getElementById(
+        "mic-btn"
+    );
+
+/* =========================================================
+STATE
+========================================================= */
+
+function setState(state) {
+
+    if (state === "listening") {
+
+        waveform.style.display =
+            "flex";
+
+        status.innerText =
+            "🎤 figyelek...";
+
+        micBtn.innerHTML = "■";
+    }
+
+    else if (state === "processing") {
+
+        waveform.style.display =
+            "none";
+
+        status.innerText =
+            "⚙️ feldolgozás...";
+
+        micBtn.innerHTML = "🎤";
+    }
+
+    else {
+
+        waveform.style.display =
+            "none";
+
+        status.innerText = "";
+
+        micBtn.innerHTML = "🎤";
+    }
+}
 
 /* =========================================================
 AUTOSIZE
@@ -1690,14 +1764,13 @@ if (
     recognition.onstart =
         function() {
 
-        status.innerText =
-            "🎤 figyelek...";
+        setState("listening");
     };
 
     recognition.onend =
         function() {
 
-        status.innerText = "";
+        setState("idle");
     };
 
     recognition.onresult =
@@ -1712,8 +1785,13 @@ if (
 
         autoResize();
 
-        status.innerText =
-            "🎤 szöveg felismerve";
+        setState("processing");
+
+        setTimeout(() => {
+
+            setState("idle");
+
+        }, 900);
     };
 }
 
@@ -1729,32 +1807,32 @@ document
 };
 
 /* =========================================================
-UPLOAD BUTTON
+UPLOAD STATUS
 ========================================================= */
 
-document
-.getElementById(
-    "upload-btn"
-)
-.onclick = function() {
+const uploadInput =
+    window.parent.document
+    .querySelector(
+        'input[type="file"]'
+    );
 
-    status.innerText =
-        "📎 fájl kiválasztása...";
+if (uploadInput) {
 
-    const inputs =
-        window.parent.document
-        .querySelectorAll(
-            'input[type="file"]'
-        );
+    uploadInput.addEventListener(
+        "change",
+        () => {
 
-    if (
-        inputs &&
-        inputs.length > 0
-    ) {
+            status.innerText =
+                "📎 fájl feltöltve";
 
-        inputs[0].click();
-    }
-};
+            setTimeout(() => {
+
+                status.innerText = "";
+
+            }, 1600);
+        }
+    );
+}
 
 /* =========================================================
 SUBMIT
@@ -1767,8 +1845,7 @@ function submitPrompt() {
 
     if (!text) return;
 
-    status.innerText =
-        "⚙️ futtatás...";
+    setState("processing");
 
     const hiddenInput =
         window.parent.document
@@ -1836,13 +1913,13 @@ function submitPrompt() {
         textarea.style.height =
             "54px";
 
-        status.innerText = "";
+        setState("idle");
 
         requestAnimationFrame(
             autoResize
         );
 
-    }, 600);
+    }, 700);
 }
 
 /* =========================================================
@@ -1878,7 +1955,7 @@ textarea.addEventListener(
 
 </script>
 
-""", height=180)
+""", height=220)
 
 # ============================================================
 # EXECUTION ENGINE
