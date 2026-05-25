@@ -1029,16 +1029,15 @@ if st.session_state.state_history:
         st.metric(
             "ENTROPY",
             f"{cur['entropy']:.2f}"
-        )
+        
 
 
-# ========================================================
-
-# ============================================================
+# =========================================================
+            # ============================================================
 # INIT MODULE
 # RUNTIME INPUT SYSTEM
-# COGNITO RUNTIME SHELL v18
-# FINAL MOBILE + SUBMIT FIX
+# COGNITO RUNTIME SHELL v22
+# FINAL AUDITED MOBILE STABLE
 # ============================================================
 
 import streamlit as st
@@ -1111,25 +1110,53 @@ body,
 }
 
 /* =========================================================
-HIDE STREAMLIT UI
+HIDE STREAMLIT INPUTS
 ========================================================= */
 
 [data-testid="stTextInput"],
 [data-testid="stChatInput"],
-.stButton,
-button[kind="secondaryFormSubmit"],
-[data-testid="stFormSubmitButton"] {
+.stButton {
 
-    display:none !important;
+    opacity:0 !important;
+
+    height:0 !important;
+
+    overflow:hidden !important;
 }
 
 /* =========================================================
-HIDE WHOLE STREAMLIT FORM
+KEEP SUBMIT ACTIVE
+========================================================= */
+
+button[kind="secondaryFormSubmit"],
+[data-testid="stFormSubmitButton"] {
+
+    position:absolute !important;
+
+    left:-9999px !important;
+
+    width:1px !important;
+
+    height:1px !important;
+
+    opacity:0.01 !important;
+}
+
+/* =========================================================
+KEEP FORM IN DOM
 ========================================================= */
 
 div[data-testid="stForm"] {
 
-    display:none !important;
+    position:absolute !important;
+
+    opacity:0 !important;
+
+    height:0 !important;
+
+    overflow:hidden !important;
+
+    z-index:-1 !important;
 }
 
 /* =========================================================
@@ -1162,7 +1189,7 @@ BOTTOM SPACE
 
 .cog-bottom-space {
 
-    height:130px;
+    height:140px;
 }
 
 </style>
@@ -1287,11 +1314,13 @@ COMPOSER
 
 #cog-composer {
 
+    width:100%;
+
     display:flex;
 
     align-items:center;
 
-    gap:10px;
+    gap:8px;
 
     padding:10px;
 
@@ -1310,6 +1339,8 @@ COMPOSER
 
     box-shadow:
         0 0 30px rgba(0,255,255,0.08);
+
+    box-sizing:border-box;
 }
 
 /* =========================================================
@@ -1338,18 +1369,7 @@ BUTTONS
 
     cursor:pointer;
 
-    transition:0.2s;
-
     flex-shrink:0;
-}
-
-.cog-btn:hover {
-
-    background:
-        rgba(0,255,255,0.16);
-
-    box-shadow:
-        0 0 12px rgba(0,255,255,0.24);
 }
 
 /* =========================================================
@@ -1358,17 +1378,13 @@ TEXTAREA
 
 #cog-input {
 
-    flex-grow:1;
+    flex:1;
 
-    flex-shrink:1;
-
-    width:auto;
-
-    min-width:120px;
+    min-width:0;
 
     min-height:54px;
 
-    max-height:140px;
+    max-height:160px;
 
     resize:none;
 
@@ -1392,11 +1408,9 @@ TEXTAREA
 
     padding:14px 16px;
 
-    overflow-y:auto;
+    overflow-y:hidden;
 
     box-sizing:border-box;
-
-    display:block;
 }
 
 /* =========================================================
@@ -1428,17 +1442,7 @@ SEND BUTTON
 
     cursor:pointer;
 
-    transition:0.2s;
-
     flex-shrink:0;
-}
-
-#send-btn:hover {
-
-    transform:scale(1.03);
-
-    box-shadow:
-        0 0 18px rgba(0,255,255,0.24);
 }
 
 </style>
@@ -1449,15 +1453,8 @@ SEND BUTTON
 
         <!-- FILE -->
 
-        <input
-            type="file"
-            id="file-input"
-            hidden
-        >
-
         <button
             class="cog-btn"
-            id="file-btn"
             type="button"
         >
             📎
@@ -1478,7 +1475,6 @@ SEND BUTTON
         <textarea
             id="cog-input"
             rows="1"
-            placeholder=""
         ></textarea>
 
         <!-- SEND -->
@@ -1514,13 +1510,26 @@ AUTOSIZE
 function autoResize() {
 
     textarea.style.height =
-        "54px";
+        "auto";
 
     textarea.style.height =
         Math.min(
             textarea.scrollHeight,
-            140
+            160
         ) + "px";
+
+    if (
+        textarea.scrollHeight > 160
+    ) {
+
+        textarea.style.overflowY =
+            "auto";
+    }
+    else {
+
+        textarea.style.overflowY =
+            "hidden";
+    }
 }
 
 textarea.addEventListener(
@@ -1528,48 +1537,15 @@ textarea.addEventListener(
     autoResize
 );
 
-textarea.addEventListener(
-    "keydown",
-    (e) => {
-
-        if (
-            e.key === "Backspace"
-            ||
-            e.key === "Delete"
-        ) {
-
-            setTimeout(
-                autoResize,
-                0
-            );
-        }
-    }
+requestAnimationFrame(
+    autoResize
 );
-
-/* =========================================================
-FILE BUTTON
-========================================================= */
-
-document
-.getElementById(
-    "file-btn"
-)
-.onclick = () => {
-
-    document
-    .getElementById(
-        "file-input"
-    )
-    .click();
-};
 
 /* =========================================================
 VOICE
 ========================================================= */
 
 let recognition = null;
-
-let micActive = false;
 
 if (
     "webkitSpeechRecognition"
@@ -1597,19 +1573,6 @@ if (
 
         autoResize();
     };
-
-    recognition.onend =
-        function() {
-
-        micActive = false;
-
-        document
-        .getElementById(
-            "mic-btn"
-        )
-        .style.background =
-            "rgba(0,255,255,0.06)";
-    };
 }
 
 document
@@ -1618,33 +1581,9 @@ document
 )
 .onclick = function() {
 
-    if (!recognition) {
+    if (!recognition) return;
 
-        alert(
-            "Speech recognition unsupported"
-        );
-
-        return;
-    }
-
-    if (!micActive) {
-
-        recognition.start();
-
-        micActive = true;
-
-        this.style.background =
-            "rgba(255,0,120,0.28)";
-    }
-    else {
-
-        recognition.stop();
-
-        micActive = false;
-
-        this.style.background =
-            "rgba(0,255,255,0.06)";
-    }
+    recognition.start();
 };
 
 /* =========================================================
@@ -1667,17 +1606,26 @@ function submitPrompt() {
     if (!hiddenInput) {
 
         console.error(
-            "Hidden input not found"
+            "Hidden input missing"
         );
 
         return;
     }
 
     /* =====================================================
-    FORCE VALUE
+    REACT SAFE VALUE SET
     ===================================================== */
 
-    hiddenInput.value = text;
+    const nativeSetter =
+        Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype,
+            "value"
+        ).set;
+
+    nativeSetter.call(
+        hiddenInput,
+        text
+    );
 
     hiddenInput.dispatchEvent(
         new Event(
@@ -1698,7 +1646,7 @@ function submitPrompt() {
     );
 
     /* =====================================================
-    REAL STREAMLIT SUBMIT
+    SUBMIT BUTTON
     ===================================================== */
 
     const submitBtn =
@@ -1711,16 +1659,7 @@ function submitPrompt() {
 
         setTimeout(() => {
 
-            submitBtn.dispatchEvent(
-                new MouseEvent(
-                    "click",
-                    {
-                        bubbles:true,
-                        cancelable:true,
-                        view:window
-                    }
-                )
-            );
+            submitBtn.click();
 
         }, 80);
     }
@@ -1734,9 +1673,13 @@ function submitPrompt() {
         textarea.value = "";
 
         textarea.style.height =
-            "54px";
+            "auto";
 
-    }, 800);
+        requestAnimationFrame(
+            autoResize
+        );
+
+    }, 600);
 }
 
 /* =========================================================
@@ -1747,10 +1690,7 @@ document
 .getElementById(
     "send-btn"
 )
-.addEventListener(
-    "click",
-    submitPrompt
-);
+.onclick = submitPrompt;
 
 /* =========================================================
 ENTER
@@ -1775,7 +1715,7 @@ textarea.addEventListener(
 
 </script>
 
-""", height=140)
+""", height=150)
 
 # ============================================================
 # EXECUTION ENGINE
@@ -1785,18 +1725,10 @@ if submit_hidden and hidden_prompt:
 
     final_input = hidden_prompt
 
-    # ========================================================
-    # SAVE USER
-    # ========================================================
-
     st.session_state.chat_messages.append({
         "role":"user",
         "content":final_input
     })
-
-    # ========================================================
-    # STATUS
-    # ========================================================
 
     with st.status(
         "⚙️ COGNITO Runtime aktív...",
@@ -1837,10 +1769,6 @@ if submit_hidden and hidden_prompt:
             state="complete"
         )
 
-    # ========================================================
-    # PROMPT BUILD
-    # ========================================================
-
     final_prompt = (
         WritingEngine.generate_prompt(
             run_state,
@@ -1852,10 +1780,6 @@ if submit_hidden and hidden_prompt:
             pat_data
         )
     )
-
-    # ========================================================
-    # MODEL EXECUTION
-    # ========================================================
 
     response = (
         st.session_state
@@ -1886,10 +1810,6 @@ if submit_hidden and hidden_prompt:
     update_cost(
         response.usage
     )
-
-    # ========================================================
-    # SAVE ASSISTANT
-    # ========================================================
 
     st.session_state.chat_messages.append({
         "role":"assistant",
