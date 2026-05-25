@@ -1037,7 +1037,7 @@ if st.session_state.state_history:
 # ============================================================
 # INIT MODULE
 # RUNTIME INPUT SYSTEM
-# MONOLITH RUNTIME SHELL v15 STABLE
+# MONOLITH RUNTIME SHELL v16 FINAL UI FIX
 # ============================================================
 
 import streamlit as st
@@ -1049,14 +1049,9 @@ from openai import OpenAI
 
 # ============================================================
 # ENGINE INITIALIZATION
-# PERSISTENT RUNTIME OBJECTS
 # ============================================================
 
 if "engine_initialized" not in st.session_state:
-
-    # ========================================================
-    # OPENAI CLIENT
-    # ========================================================
 
     st.session_state.client = OpenAI(
         api_key=st.secrets.get(
@@ -1064,10 +1059,6 @@ if "engine_initialized" not in st.session_state:
             ""
         )
     )
-
-    # ========================================================
-    # CORE ENGINES
-    # ========================================================
 
     st.session_state.pat_eng = (
         PatternEngine()
@@ -1083,10 +1074,6 @@ if "engine_initialized" not in st.session_state:
         StateMachine()
     )
 
-    # ========================================================
-    # INIT FLAG
-    # ========================================================
-
     st.session_state.engine_initialized = True
 
 # ============================================================
@@ -1095,9 +1082,6 @@ if "engine_initialized" not in st.session_state:
 
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
-
-if "runtime_input_cache" not in st.session_state:
-    st.session_state.runtime_input_cache = ""
 
 # ============================================================
 # GLOBAL CSS
@@ -1137,6 +1121,20 @@ HIDE STREAMLIT INPUTS
 }
 
 /* =========================================================
+HIDE STREAMLIT FORM BUTTON
+========================================================= */
+
+button[kind="secondaryFormSubmit"] {
+
+    display:none !important;
+}
+
+[data-testid="stFormSubmitButton"] {
+
+    display:none !important;
+}
+
+/* =========================================================
 CHAT MESSAGE
 ========================================================= */
 
@@ -1166,14 +1164,14 @@ BOTTOM SPACE
 
 .cog-bottom-space {
 
-    height:110px;
+    height:120px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# HIDDEN RUNTIME BRIDGE
+# HIDDEN FORM BRIDGE
 # ============================================================
 
 with st.form(
@@ -1259,7 +1257,7 @@ for msg in st.session_state.chat_messages:
             """, height=46)
 
 # ============================================================
-# FRONTEND RUNTIME SHELL
+# FRONTEND SHELL
 # ============================================================
 
 components.html("""
@@ -1276,7 +1274,7 @@ WRAP
 
     left:50%;
 
-    bottom:8px;
+    bottom:10px;
 
     transform:translateX(-50%);
 
@@ -1293,16 +1291,16 @@ COMPOSER
 
     display:flex;
 
-    align-items:center;
+    align-items:flex-end;
 
-    gap:8px;
+    gap:10px;
 
-    padding:8px;
+    padding:10px;
 
-    border-radius:22px;
+    border-radius:26px;
 
     background:
-        rgba(8,14,24,0.94);
+        rgba(8,14,24,0.96);
 
     border:
         1px solid rgba(0,255,255,0.14);
@@ -1320,13 +1318,13 @@ BUTTONS
 
 .cog-btn {
 
-    width:42px;
+    width:48px;
 
-    height:42px;
+    height:48px;
 
     border:none;
 
-    border-radius:12px;
+    border-radius:16px;
 
     background:
         rgba(0,255,255,0.06);
@@ -1336,7 +1334,7 @@ BUTTONS
 
     color:white;
 
-    font-size:18px;
+    font-size:20px;
 
     cursor:pointer;
 
@@ -1362,9 +1360,9 @@ TEXTAREA
 
     flex:1;
 
-    min-height:22px;
+    min-height:52px;
 
-    max-height:120px;
+    max-height:140px;
 
     resize:none;
 
@@ -1372,7 +1370,7 @@ TEXTAREA
 
     outline:none;
 
-    border-radius:16px;
+    border-radius:18px;
 
     background:
         rgba(18,24,38,0.96);
@@ -1382,13 +1380,15 @@ TEXTAREA
 
     color:white;
 
-    font-size:15px;
+    font-size:16px;
 
-    line-height:1.4;
+    line-height:1.5;
 
-    padding:12px 14px;
+    padding:14px 16px;
 
     overflow-y:auto;
+
+    box-sizing:border-box;
 }
 
 /* =========================================================
@@ -1397,13 +1397,13 @@ SEND BUTTON
 
 #send-btn {
 
-    width:46px;
+    width:56px;
 
-    height:46px;
+    height:56px;
 
     border:none;
 
-    border-radius:14px;
+    border-radius:18px;
 
     background:
         linear-gradient(
@@ -1414,7 +1414,7 @@ SEND BUTTON
 
     color:black;
 
-    font-size:20px;
+    font-size:24px;
 
     font-weight:bold;
 
@@ -1463,7 +1463,7 @@ SEND BUTTON
             🎤
         </button>
 
-        <!-- INPUT -->
+        <!-- TEXTAREA -->
 
         <textarea
             id="cog-input"
@@ -1503,12 +1503,12 @@ AUTOSIZE
 function autoResize() {
 
     textarea.style.height =
-        "auto";
+        "52px";
 
     textarea.style.height =
         Math.min(
             textarea.scrollHeight,
-            120
+            140
         ) + "px";
 }
 
@@ -1516,10 +1516,6 @@ textarea.addEventListener(
     "input",
     autoResize
 );
-
-/* =========================================================
-DELETE / BACKSPACE FIX
-========================================================= */
 
 textarea.addEventListener(
     "keydown",
@@ -1687,7 +1683,7 @@ function submitPrompt() {
     );
 
     /* =====================================================
-    STREAMLIT STATE COMMIT WAIT
+    FORM SUBMIT
     ===================================================== */
 
     const form =
@@ -1703,7 +1699,7 @@ function submitPrompt() {
     }, 120);
 
     /* =====================================================
-    DELAYED CLEAR
+    CLEAR
     ===================================================== */
 
     setTimeout(() => {
@@ -1711,7 +1707,7 @@ function submitPrompt() {
         textarea.value = "";
 
         textarea.style.height =
-            "auto";
+            "52px";
 
     }, 800);
 }
@@ -1749,7 +1745,7 @@ textarea.addEventListener(
 
 </script>
 
-""", height=120)
+""", height=130)
 
 # ============================================================
 # EXECUTION ENGINE
