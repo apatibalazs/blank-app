@@ -1037,7 +1037,7 @@ if st.session_state.state_history:
 # ============================================================
 # INIT MODULE
 # RUNTIME INPUT SYSTEM
-# MONOLITH RUNTIME SHELL v13 STABLE
+# MONOLITH RUNTIME SHELL v14 STABLE
 # ============================================================
 
 import streamlit as st
@@ -1684,16 +1684,20 @@ function submitPrompt() {
     );
 
     /* =====================================================
-    REAL FORM SUBMIT
+    STREAMLIT STATE COMMIT WAIT
     ===================================================== */
 
     const form =
         hiddenInput.closest("form");
 
-    if (form) {
+    setTimeout(() => {
 
-        form.requestSubmit();
-    }
+        if (form) {
+
+            form.requestSubmit();
+        }
+
+    }, 120);
 
     /* =====================================================
     DELAYED CLEAR
@@ -1706,7 +1710,7 @@ function submitPrompt() {
         textarea.style.height =
             "auto";
 
-    }, 400);
+    }, 800);
 }
 
 /* =========================================================
