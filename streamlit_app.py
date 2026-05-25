@@ -1033,8 +1033,8 @@ if st.session_state.state_history:
 
 # ============================================================
 # INIT MODULE
-# COGNITO RUNTIME SHELL v24.1
-# MOBILE STABLE BUILD
+# COGNITO RUNTIME SHELL v24.2
+# MOBILE UI STABLE BUILD
 # ============================================================
 
 import json
@@ -1416,9 +1416,9 @@ COMPOSER
 
     align-items:stretch;
 
-    gap:8px;
+    gap:6px;
 
-    padding:10px;
+    padding:8px;
 
     min-height:76px;
 
@@ -1445,13 +1445,13 @@ BUTTONS
 
 .cog-btn {
 
-    width:50px;
+    width:44px;
 
-    height:50px;
+    height:44px;
 
     border:none;
 
-    border-radius:16px;
+    border-radius:14px;
 
     background:
         rgba(0,255,255,0.06);
@@ -1461,7 +1461,7 @@ BUTTONS
 
     color:white;
 
-    font-size:20px;
+    font-size:18px;
 
     cursor:pointer;
 
@@ -1502,7 +1502,7 @@ TEXTAREA
 
     color:white;
 
-    font-size:16px;
+    font-size:18px;
 
     line-height:1.5;
 
@@ -1519,9 +1519,9 @@ SEND BUTTON
 
 #send-btn {
 
-    width:58px;
+    width:52px;
 
-    height:58px;
+    height:52px;
 
     border:none;
 
@@ -1536,7 +1536,7 @@ SEND BUTTON
 
     color:black;
 
-    font-size:24px;
+    font-size:22px;
 
     font-weight:bold;
 
@@ -1700,15 +1700,18 @@ document
 )
 .onclick = function() {
 
-    const realUpload =
+    const inputs =
         window.parent.document
-        .querySelector(
+        .querySelectorAll(
             'input[type="file"]'
         );
 
-    if (realUpload) {
+    if (
+        inputs &&
+        inputs.length > 0
+    ) {
 
-        realUpload.click();
+        inputs[0].click();
     }
 };
 
@@ -1804,7 +1807,7 @@ document
 .getElementById(
     "send-btn"
 )
-onclick = submitPrompt;
+.onclick = submitPrompt;
 
 /* =========================================================
 ENTER
