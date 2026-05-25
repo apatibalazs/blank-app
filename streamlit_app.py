@@ -1033,8 +1033,8 @@ if st.session_state.state_history:
 
 # ============================================================
 # INIT MODULE
-# COGNITO RUNTIME SHELL v24
-# FULL STABLE BUILD
+# COGNITO RUNTIME SHELL v24.1
+# MOBILE STABLE BUILD
 # ============================================================
 
 import json
@@ -1329,10 +1329,6 @@ for msg in st.session_state.chat_messages:
             msg["content"]
         )
 
-        # ====================================================
-        # COPY BUTTON
-        # ====================================================
-
         if msg["role"] == "assistant":
 
             safe_text = json.dumps(
@@ -1418,7 +1414,7 @@ COMPOSER
 
     display:flex;
 
-    align-items:flex-end;
+    align-items:stretch;
 
     gap:8px;
 
@@ -1470,6 +1466,8 @@ BUTTONS
     cursor:pointer;
 
     flex-shrink:0;
+
+    align-self:flex-end;
 }
 
 /* =========================================================
@@ -1479,6 +1477,8 @@ TEXTAREA
 #cog-input {
 
     flex:1;
+
+    width:100%;
 
     min-width:0;
 
@@ -1543,6 +1543,8 @@ SEND BUTTON
     cursor:pointer;
 
     flex-shrink:0;
+
+    align-self:flex-end;
 }
 
 </style>
@@ -1701,7 +1703,7 @@ document
     const realUpload =
         window.parent.document
         .querySelector(
-            '[data-testid="stFileUploader"] input[type="file"]'
+            'input[type="file"]'
         );
 
     if (realUpload) {
@@ -1736,10 +1738,6 @@ function submitPrompt() {
         return;
     }
 
-    /* =====================================================
-    REACT SAFE VALUE SET
-    ===================================================== */
-
     const nativeSetter =
         Object.getOwnPropertyDescriptor(
             window.HTMLInputElement.prototype,
@@ -1769,10 +1767,6 @@ function submitPrompt() {
         )
     );
 
-    /* =====================================================
-    SUBMIT BUTTON
-    ===================================================== */
-
     const submitBtn =
         window.parent.document
         .querySelector(
@@ -1787,10 +1781,6 @@ function submitPrompt() {
 
         }, 80);
     }
-
-    /* =====================================================
-    CLEAR
-    ===================================================== */
 
     setTimeout(() => {
 
@@ -1814,7 +1804,7 @@ document
 .getElementById(
     "send-btn"
 )
-.onclick = submitPrompt;
+onclick = submitPrompt;
 
 /* =========================================================
 ENTER
@@ -1849,10 +1839,6 @@ if submit_hidden and hidden_prompt:
 
     final_input = hidden_prompt
 
-    # ========================================================
-    # FILE CONTENT
-    # ========================================================
-
     if st.session_state.uploaded_file_text:
 
         final_input += (
@@ -1861,18 +1847,10 @@ if submit_hidden and hidden_prompt:
             st.session_state.uploaded_file_text
         )
 
-    # ========================================================
-    # SAVE USER
-    # ========================================================
-
     st.session_state.chat_messages.append({
         "role":"user",
         "content":final_input
     })
-
-    # ========================================================
-    # STATUS
-    # ========================================================
 
     with st.status(
         "⚙️ COGNITO Runtime aktív...",
@@ -1913,10 +1891,6 @@ if submit_hidden and hidden_prompt:
             state="complete"
         )
 
-    # ========================================================
-    # PROMPT BUILD
-    # ========================================================
-
     final_prompt = (
         WritingEngine.generate_prompt(
             run_state,
@@ -1928,10 +1902,6 @@ if submit_hidden and hidden_prompt:
             pat_data
         )
     )
-
-    # ========================================================
-    # MODEL EXECUTION
-    # ========================================================
 
     response = (
         st.session_state
@@ -1963,18 +1933,10 @@ if submit_hidden and hidden_prompt:
         response.usage
     )
 
-    # ========================================================
-    # SAVE ASSISTANT
-    # ========================================================
-
     st.session_state.chat_messages.append({
         "role":"assistant",
         "content":out
     })
-
-    # ========================================================
-    # CLEAR FILE CACHE
-    # ========================================================
 
     st.session_state.uploaded_file_text = ""
 
